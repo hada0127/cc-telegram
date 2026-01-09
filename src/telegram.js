@@ -3,6 +3,7 @@
  * 명령어 처리, 폴링, 메시지 전송
  */
 
+import os from 'os';
 import { loadConfig } from './config.js';
 import {
   createTask,
@@ -717,7 +718,14 @@ export async function startBot() {
 
   await setMyCommands();
   info('텔레그램 봇 시작');
-  await sendMessage('🤖 cc-telegram 봇이 시작되었습니다.');
+
+  const hostname = os.hostname();
+  const workingDir = process.cwd();
+  await sendMessage(
+    `🤖 cc-telegram 봇이 시작되었습니다.\n\n` +
+    `💻 PC: ${hostname}\n` +
+    `📁 경로: <code>${workingDir}</code>`
+  );
 
   // 백그라운드 폴링 시작
   pollLoop().catch(err => {
