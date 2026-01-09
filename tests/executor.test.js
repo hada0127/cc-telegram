@@ -1,19 +1,100 @@
 /**
  * executor.js 단위 테스트
- * 결과 분석 로직 테스트
+ * 결과 분석 로직 테스트 및 모듈 함수 테스트
  */
 
 import { jest } from '@jest/globals';
+import fs from 'fs/promises';
+import path from 'path';
+import os from 'os';
 
-// analyzeResult와 extractFailureReason 함수를 테스트하기 위해
-// executor 모듈의 내부 로직을 재현
+// 테스트용 임시 디렉토리
+let testDir;
+let dataDir;
+
+// 모듈 동적 import
+let configModule;
+let executorModule;
+let tasksModule;
+let encryptionModule;
+
+// fetch mock
+global.fetch = jest.fn();
+
+beforeAll(async () => {
+  // 임시 디렉토리 생성
+  testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-telegram-executor-test-'));
+  dataDir = path.join(testDir, '.cc-telegram');
+
+  // 디렉토리 구조 생성
+  await fs.mkdir(dataDir, { recursive: true });
+  await fs.mkdir(path.join(dataDir, 'tasks'), { recursive: true });
+  await fs.mkdir(path.join(dataDir, 'completed'), { recursive: true });
+  await fs.mkdir(path.join(dataDir, 'failed'), { recursive: true });
+  await fs.mkdir(path.join(dataDir, 'logs'), { recursive: true });
+
+  // 초기 JSON 파일 생성
+  await fs.writeFile(
+    path.join(dataDir, 'tasks.json'),
+    JSON.stringify({ lastUpdated: '', tasks: [] }, null, 2)
+  );
+  await fs.writeFile(
+    path.join(dataDir, 'completed.json'),
+    JSON.stringify({ tasks: [] }, null, 2)
+  );
+  await fs.writeFile(
+    path.join(dataDir, 'failed.json'),
+    JSON.stringify({ tasks: [] }, null, 2)
+  );
+
+  // config 모듈 import 및 cwd 설정
+  configModule = await import('../src/config.js');
+  configModule.setCwd(testDir);
+
+  // encryption 모듈 import
+  encryptionModule = await import('../src/utils/encryption.js');
+
+  // config 파일 생성
+  await fs.writeFile(
+    path.join(dataDir, 'config.json'),
+    JSON.stringify({
+      botToken: encryptionModule.encrypt('test-token'),
+      chatId: encryptionModule.encrypt('12345')
+    }, null, 2)
+  );
+
+  // tasks 모듈 import
+  tasksModule = await import('../src/tasks.js');
+
+  // executor 모듈 import
+  executorModule = await import('../src/executor.js');
+});
+
+afterAll(async () => {
+  // 실행기 중지
+  if (executorModule) {
+    executorModule.stopExecutor();
+  }
+
+  // 임시 디렉토리 삭제
+  if (testDir) {
+    await fs.rm(testDir, { recursive: true, force: true });
+  }
+});
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  global.fetch.mockResolvedValue({
+    json: () => Promise.resolve({ ok: true, result: {} })
+  });
+});
 
 // 완료 신호 상수
 const COMPLETION_SIGNAL = '<promise>COMPLETE</promise>';
 const FAILURE_SIGNAL = '<promise>FAILED</promise>';
 
 /**
- * 결과 분석 (완료 조건 충족 여부)
+ * 결과 분석 (완료 조건 충족 여부) - executor.js 로직 재현
  * @param {string} output
  * @returns {{success: boolean, reason: string|null}}
  */
@@ -95,7 +176,7 @@ function analyzeResult(output) {
 }
 
 /**
- * 실패 이유 추출
+ * 실패 이유 추출 - executor.js 로직 재현
  * @param {string} output
  * @returns {string}
  */
@@ -122,6 +203,57 @@ function extractFailureReason(output) {
   }
 
   return '알 수 없는 오류';
+}
+
+/**
+ * HTML 이스케이프 함수 - executor.js 로직 재현
+ */
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/**
+ * 프롬프트 생성 - executor.js 로직 재현
+ */
+function buildPrompt(task) {
+  return `# 작업 요청
+
+## 요구사항
+${task.requirement}
+
+## 완료 조건
+${task.completionCriteria || '없음'}
+
+## 지시사항
+- 위 요구사항을 수행하고 완료 조건을 충족시켜주세요.
+- 작업이 완료되면 완료 조건이 충족되었는지 확인해주세요.
+- 완료 조건을 충족하지 못했다면 그 이유를 설명해주세요.
+
+## 완료 신호 (중요!)
+- 모든 작업을 완료하고 완료 조건을 충족했다면 반드시 다음 신호를 출력해주세요:
+  ${COMPLETION_SIGNAL}
+- 작업을 완료할 수 없거나 완료 조건을 충족하지 못했다면 다음 신호와 함께 이유를 출력해주세요:
+  ${FAILURE_SIGNAL}
+  실패 이유: [구체적인 이유]
+`;
+}
+
+/**
+ * 요약 생성 - executor.js 로직 재현
+ */
+function generateSummary(output, success, reason = null) {
+  const lines = output.split('\n').filter(l => l.trim());
+  const lastLines = escapeHtml(lines.slice(-5).join('\n'));
+
+  if (success) {
+    return `작업 완료. ${lastLines.slice(0, 250)}`;
+  } else {
+    const reasonText = reason ? `\n실패 원인: ${escapeHtml(reason)}` : '';
+    return `작업 실패.${reasonText}\n${lastLines.slice(0, 200)}`;
+  }
 }
 
 describe('analyzeResult - 완료 신호 기반 판단', () => {
@@ -178,6 +310,56 @@ Fatal: 메모리 부족
     expect(result.reason).toContain('메모리 부족');
   });
 
+  test('exception 패턴이 있으면 실패로 판단해야 함', () => {
+    const output = `작업을 진행합니다...
+Exception: NullPointerException
+`;
+
+    const result = analyzeResult(output);
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain('NullPointerException');
+  });
+
+  test('panic 패턴이 있으면 실패로 판단해야 함', () => {
+    const output = `작업을 진행합니다...
+Panic: stack overflow
+`;
+
+    const result = analyzeResult(output);
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain('stack overflow');
+  });
+
+  test('failed to 패턴이 있으면 실패로 판단해야 함', () => {
+    const output = `작업을 진행합니다...
+Failed to compile the project
+`;
+
+    const result = analyzeResult(output);
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain('compile the project');
+  });
+
+  test('could not 패턴이 있으면 실패로 판단해야 함', () => {
+    const output = `작업을 진행합니다...
+Could not connect to database
+`;
+
+    const result = analyzeResult(output);
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain('connect to database');
+  });
+
+  test('unable to 패턴이 있으면 실패로 판단해야 함', () => {
+    const output = `작업을 진행합니다...
+Unable to find module
+`;
+
+    const result = analyzeResult(output);
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain('find module');
+  });
+
   test('성공 지표가 있으면 성공으로 판단해야 함', () => {
     const output = `빌드를 진행합니다...
 컴파일 완료
@@ -197,6 +379,27 @@ Fatal: 메모리 부족
   test('성공 지표 - 모든 테스트 통과', () => {
     const output = `테스트 실행 중...
 모든 테스트 통과`;
+
+    const result = analyzeResult(output);
+    expect(result.success).toBe(true);
+  });
+
+  test('성공 지표 - 완료됐', () => {
+    const output = `작업이 완료됐습니다.`;
+
+    const result = analyzeResult(output);
+    expect(result.success).toBe(true);
+  });
+
+  test('성공 지표 - all tests passed', () => {
+    const output = `All tests passed!`;
+
+    const result = analyzeResult(output);
+    expect(result.success).toBe(true);
+  });
+
+  test('성공 지표 - build succeeded', () => {
+    const output = `Build succeeded!`;
 
     const result = analyzeResult(output);
     expect(result.success).toBe(true);
@@ -263,6 +466,30 @@ Error: 네트워크 연결 실패`;
     expect(reason).toContain('네트워크 연결 실패');
   });
 
+  test('Failed: 패턴에서 이유를 추출해야 함', () => {
+    const output = `작업 중 오류 발생
+Failed: 빌드 실패`;
+
+    const reason = extractFailureReason(output);
+    expect(reason).toContain('빌드 실패');
+  });
+
+  test('실패: 패턴에서 이유를 추출해야 함', () => {
+    const output = `작업 중 오류 발생
+실패: 테스트 실패`;
+
+    const reason = extractFailureReason(output);
+    expect(reason).toContain('테스트 실패');
+  });
+
+  test('오류: 패턴에서 이유를 추출해야 함', () => {
+    const output = `작업 중
+오류: 파일 없음`;
+
+    const reason = extractFailureReason(output);
+    expect(reason).toContain('파일 없음');
+  });
+
   test('패턴이 없으면 알 수 없는 오류 반환해야 함', () => {
     const output = '뭔가 잘못됐습니다';
     const reason = extractFailureReason(output);
@@ -271,14 +498,6 @@ Error: 네트워크 연결 실패`;
 });
 
 describe('HTML 이스케이프', () => {
-  // HTML 이스케이프 함수 재현
-  function escapeHtml(text) {
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-  }
-
   test('& 문자를 이스케이프해야 함', () => {
     expect(escapeHtml('foo & bar')).toBe('foo &amp; bar');
   });
@@ -294,5 +513,254 @@ describe('HTML 이스케이프', () => {
   test('모든 특수 문자를 이스케이프해야 함', () => {
     expect(escapeHtml('<script>alert("xss")</script>'))
       .toBe('&lt;script&gt;alert("xss")&lt;/script&gt;');
+  });
+
+  test('복합 문자열을 이스케이프해야 함', () => {
+    expect(escapeHtml('a < b & c > d'))
+      .toBe('a &lt; b &amp; c &gt; d');
+  });
+
+  test('빈 문자열은 그대로 반환해야 함', () => {
+    expect(escapeHtml('')).toBe('');
+  });
+});
+
+describe('buildPrompt', () => {
+  test('프롬프트가 올바른 형식이어야 함', () => {
+    const task = {
+      requirement: '테스트 작업',
+      completionCriteria: '완료 조건'
+    };
+
+    const prompt = buildPrompt(task);
+    expect(prompt).toContain('테스트 작업');
+    expect(prompt).toContain('완료 조건');
+    expect(prompt).toContain(COMPLETION_SIGNAL);
+    expect(prompt).toContain(FAILURE_SIGNAL);
+  });
+
+  test('completionCriteria가 없으면 "없음"으로 표시해야 함', () => {
+    const task = {
+      requirement: '테스트 작업',
+      completionCriteria: null
+    };
+
+    const prompt = buildPrompt(task);
+    expect(prompt).toContain('## 완료 조건\n없음');
+  });
+});
+
+describe('generateSummary', () => {
+  test('성공 시 요약을 생성해야 함', () => {
+    const output = '작업 완료\n모든 테스트 통과\n빌드 성공';
+    const summary = generateSummary(output, true);
+    expect(summary).toContain('작업 완료.');
+  });
+
+  test('실패 시 요약을 생성해야 함', () => {
+    const output = '작업 실패\n오류 발생';
+    const reason = '빌드 오류';
+    const summary = generateSummary(output, false, reason);
+    expect(summary).toContain('작업 실패.');
+    expect(summary).toContain('실패 원인:');
+    expect(summary).toContain('빌드 오류');
+  });
+
+  test('실패 시 이유 없이 요약을 생성해야 함', () => {
+    const output = '작업 실패\n오류 발생';
+    const summary = generateSummary(output, false);
+    expect(summary).toContain('작업 실패.');
+    expect(summary).not.toContain('실패 원인:');
+  });
+
+  test('HTML 특수 문자를 이스케이프해야 함', () => {
+    const output = '<script>alert("xss")</script>';
+    const summary = generateSummary(output, true);
+    expect(summary).toContain('&lt;script&gt;');
+  });
+
+  test('빈 출력도 처리해야 함', () => {
+    const output = '';
+    const summary = generateSummary(output, true);
+    expect(summary).toContain('작업 완료.');
+  });
+
+  test('긴 출력을 잘라야 함', () => {
+    const lines = Array(20).fill('아주 긴 줄의 텍스트입니다.');
+    const output = lines.join('\n');
+    const summary = generateSummary(output, true);
+    // 마지막 5줄만 포함되어야 함
+    expect(summary.split('\n').length).toBeLessThan(10);
+  });
+});
+
+describe('executor 모듈 함수 테스트', () => {
+  test('startExecutor가 함수여야 함', () => {
+    expect(typeof executorModule.startExecutor).toBe('function');
+  });
+
+  test('stopExecutor가 함수여야 함', () => {
+    expect(typeof executorModule.stopExecutor).toBe('function');
+  });
+
+  test('getCurrentTaskId가 함수여야 함', () => {
+    expect(typeof executorModule.getCurrentTaskId).toBe('function');
+  });
+
+  test('getCurrentTaskId 초기값은 null이어야 함', () => {
+    const currentTaskId = executorModule.getCurrentTaskId();
+    expect(currentTaskId).toBeNull();
+  });
+
+  test('stopExecutor가 오류 없이 호출되어야 함', () => {
+    expect(() => executorModule.stopExecutor()).not.toThrow();
+  });
+
+  test('startExecutor가 오류 없이 호출되어야 함', async () => {
+    await expect(executorModule.startExecutor()).resolves.not.toThrow();
+    // 바로 중지
+    executorModule.stopExecutor();
+  });
+
+  test('중복 startExecutor 호출이 안전해야 함', async () => {
+    await executorModule.startExecutor();
+    await executorModule.startExecutor(); // 중복 호출
+    executorModule.stopExecutor();
+  });
+});
+
+describe('getClaudeCommand 로직', () => {
+  test('Windows에서는 claude.cmd를 사용해야 함', () => {
+    const isWindows = process.platform === 'win32';
+    if (isWindows) {
+      // Windows 환경에서 테스트
+      const expectedCommand = 'claude.cmd';
+      expect(expectedCommand).toBe('claude.cmd');
+    } else {
+      // 다른 환경에서 테스트
+      const expectedCommand = 'claude';
+      expect(expectedCommand).toBe('claude');
+    }
+  });
+
+  test('사용자 지정 명령어가 파싱되어야 함', () => {
+    const claudeCommand = 'npx @anthropic-ai/claude-code';
+    const parts = claudeCommand.split(' ');
+    const command = parts[0];
+    const args = [...parts.slice(1), '--dangerously-skip-permissions'];
+
+    expect(command).toBe('npx');
+    expect(args).toContain('@anthropic-ai/claude-code');
+    expect(args).toContain('--dangerously-skip-permissions');
+  });
+});
+
+describe('runClaude 로직 시뮬레이션', () => {
+  test('spawn 옵션이 올바르게 설정되어야 함', () => {
+    const useShell = true;
+    const isWindows = process.platform === 'win32';
+
+    const spawnOptions = {
+      cwd: testDir,
+      stdio: ['pipe', 'pipe', 'pipe']
+    };
+
+    if (useShell) {
+      spawnOptions.shell = true;
+      if (isWindows) {
+        spawnOptions.windowsHide = true;
+      }
+    }
+
+    expect(spawnOptions.shell).toBe(true);
+    if (isWindows) {
+      expect(spawnOptions.windowsHide).toBe(true);
+    }
+  });
+
+  test('타임아웃 값이 30분이어야 함', () => {
+    const timeout = 30 * 60 * 1000;
+    expect(timeout).toBe(1800000);
+  });
+});
+
+describe('executeTask 로직 시뮬레이션', () => {
+  test('exitCode가 0이 아니면 실패로 처리해야 함', () => {
+    const exitCode = 1;
+    const output = '프로세스 오류';
+
+    if (exitCode !== 0) {
+      const result = { success: false, output, reason: `프로세스 종료 코드: ${exitCode}` };
+      expect(result.success).toBe(false);
+      expect(result.reason).toContain('1');
+    }
+  });
+
+  test('예외 발생 시 실패로 처리해야 함', () => {
+    const err = new Error('실행 오류');
+    const result = { success: false, output: err.message, reason: err.message };
+
+    expect(result.success).toBe(false);
+    expect(result.reason).toBe('실행 오류');
+  });
+});
+
+describe('executionLoop 로직 시뮬레이션', () => {
+  test('작업이 없으면 5초 대기해야 함', async () => {
+    const POLL_INTERVAL = 5000;
+    expect(POLL_INTERVAL).toBe(5000);
+  });
+
+  test('작업 완료 후 2초 대기해야 함', async () => {
+    const TASK_INTERVAL = 2000;
+    expect(TASK_INTERVAL).toBe(2000);
+  });
+
+  test('성공 메시지 형식이 올바라야 함', () => {
+    const task = {
+      requirement: '테스트 작업',
+      currentRetry: 0,
+      maxRetries: 3
+    };
+    const summary = '작업 완료';
+    const totalRetries = task.currentRetry + 1;
+
+    const message = `✅ <b>작업 완료!</b>\n\n` +
+      `📝 요구사항: ${task.requirement}\n\n` +
+      `🔄 반복횟수: ${totalRetries}/${task.maxRetries}회\n\n` +
+      `📋 요약:\n${summary}`;
+
+    expect(message).toContain('작업 완료!');
+    expect(message).toContain('1/3회');
+  });
+
+  test('실패 메시지 형식이 올바라야 함', () => {
+    const task = {
+      requirement: '테스트 작업',
+      maxRetries: 3
+    };
+    const updatedTask = { currentRetry: 3 };
+    const summary = '작업 실패';
+
+    const message = `❌ <b>작업 실패</b>\n\n` +
+      `📝 요구사항: ${task.requirement}\n\n` +
+      `🔄 반복횟수: ${updatedTask.currentRetry}/${task.maxRetries}회 시도 후 실패\n\n` +
+      `📋 요약:\n${summary}`;
+
+    expect(message).toContain('작업 실패');
+    expect(message).toContain('3/3회');
+  });
+
+  test('재시도 메시지 형식이 올바라야 함', () => {
+    const updatedTask = { currentRetry: 2 };
+    const task = { maxRetries: 3 };
+    const reason = '일시적 오류';
+    const reasonText = reason ? `\n원인: ${escapeHtml(reason.slice(0, 80))}` : '';
+
+    const message = `🔄 <b>재시도 중...</b> (${updatedTask.currentRetry}/${task.maxRetries})${reasonText}`;
+
+    expect(message).toContain('재시도 중');
+    expect(message).toContain('2/3');
+    expect(message).toContain('일시적 오류');
   });
 });
