@@ -167,8 +167,15 @@ async function handleStart(chatId) {
  * 명령어 처리: /new
  */
 async function handleNew(chatId) {
-  userStates.set(chatId, { step: 'requirement' });
-  await sendMessage('📝 <b>새 작업 생성</b>\n\n1단계: 요구사항을 입력하세요.\n\n(/cancel로 취소)');
+  userStates.set(chatId, { step: 'complexity' });
+  await sendMessage('📝 <b>새 작업 생성</b>\n\n요청의 복잡도를 선택하세요.\n\n(/cancel로 취소)', {
+    reply_markup: {
+      inline_keyboard: [[
+        { text: '단순(완료 조건, 반복 없음)', callback_data: 'complexity_simple' },
+        { text: '복잡(완료 조건, 반복 있음)', callback_data: 'complexity_complex' }
+      ]]
+    }
+  });
 }
 
 /**
@@ -349,6 +356,13 @@ async function handleNewTaskFlow(chatId, text) {
   const state = userStates.get(chatId);
   if (!state) return false;
 
+  // 단순 요청: 요구사항만 입력하면 바로 접수
+  if (state.step === 'simple_requirement') {
+    state.requirement = text;
+    await finishSimpleTaskCreation(chatId, state);
+    return true;
+  }
+
   if (state.step === 'requirement') {
     state.requirement = text;
     state.step = 'criteria';
@@ -391,6 +405,29 @@ async function handleNewTaskFlow(chatId, text) {
   }
 
   return false;
+}
+
+/**
+ * 단순 작업 생성 완료
+ */
+async function finishSimpleTaskCreation(chatId, state) {
+  const task = await createTask({
+    requirement: state.requirement,
+    completionCriteria: null, // 완료 조건 없음
+    maxRetries: 1, // 반복 없음
+    workingDirectory: process.cwd(),
+    priority: PRIORITY.NORMAL
+  });
+
+  userStates.delete(chatId);
+
+  await sendMessage(
+    `✅ <b>작업이 등록되었습니다!</b>\n\n` +
+    `📝 요구사항: ${state.requirement.slice(0, 100)}...\n` +
+    `⚡ 유형: 단순 (1회 실행)`
+  );
+
+  info('새 단순 작업 생성', { taskId: task.id });
 }
 
 /**
@@ -437,6 +474,34 @@ async function handleCallbackQuery(query) {
     await callApi('answerCallbackQuery', { callback_query_id: query.id });
   } catch (err) {
     error('answerCallbackQuery 실패', err.message);
+  }
+
+  // 복잡도 선택 - 단순
+  if (data === 'complexity_simple') {
+    const state = userStates.get(chatId);
+    if (state && state.step === 'complexity') {
+      state.step = 'simple_requirement';
+      state.isSimple = true;
+      userStates.set(chatId, state);
+      await sendMessage('요구사항을 입력하세요.');
+    } else {
+      await sendMessage('⚠️ 작업 생성 세션이 만료되었습니다. /new로 다시 시작해주세요.');
+    }
+    return;
+  }
+
+  // 복잡도 선택 - 복잡
+  if (data === 'complexity_complex') {
+    const state = userStates.get(chatId);
+    if (state && state.step === 'complexity') {
+      state.step = 'requirement';
+      state.isSimple = false;
+      userStates.set(chatId, state);
+      await sendMessage('1단계: 요구사항을 입력하세요.');
+    } else {
+      await sendMessage('⚠️ 작업 생성 세션이 만료되었습니다. /new로 다시 시작해주세요.');
+    }
+    return;
   }
 
   // 우선순위 선택
@@ -685,3 +750,11 @@ export function updateClaudeOutput(line) {
 export function clearClaudeOutput() {
   lastClaudeOutput = [];
 }
+
+// 테스트용 export
+export const _test = {
+  getUserState: (chatId) => userStates.get(chatId),
+  setUserState: (chatId, state) => userStates.set(chatId, state),
+  deleteUserState: (chatId) => userStates.delete(chatId),
+  clearUserStates: () => userStates.clear()
+};
