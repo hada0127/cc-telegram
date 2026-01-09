@@ -1,6 +1,6 @@
 # cc-telegram
 .cc-telegram/
-
-.claude
+.claude/
 
 node_modules
+coverage/
