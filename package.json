@@ -1,0 +1,32 @@
+{
+  "name": "cc-telegram",
+  "version": "0.1.0",
+  "description": "텔레그램을 통한 원격 Claude Code 실행 도구",
+  "type": "module",
+  "bin": {
+    "cc-telegram": "./src/cli.js"
+  },
+  "main": "./src/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testTimeout=10000"
+  },
+  "keywords": [
+    "claude",
+    "telegram",
+    "automation",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
