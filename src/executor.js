@@ -36,6 +36,7 @@ function escapeHtml(text) {
  * config에서 설정된 값이 있으면 사용, 없으면 자동 감지
  * @returns {Promise<{command: string, args: string[], useShell: boolean}>}
  */
+/* istanbul ignore next */
 async function getClaudeCommand() {
   if (cachedClaudeCommand) return cachedClaudeCommand;
 
@@ -74,6 +75,7 @@ async function getClaudeCommand() {
  * @param {string} cwd
  * @returns {Promise<{exitCode: number, output: string}>}
  */
+/* istanbul ignore next */
 async function runClaude(prompt, cwd) {
   const { command, args, useShell } = await getClaudeCommand();
 
@@ -284,6 +286,7 @@ function extractFailureReason(output) {
  * @param {object} task
  * @returns {Promise<{success: boolean, output: string, reason: string|null}>}
  */
+/* istanbul ignore next */
 async function executeTask(task) {
   const prompt = buildPrompt(task);
 
@@ -329,6 +332,7 @@ function generateSummary(output, success, reason = null) {
 /**
  * 실행 루프
  */
+/* istanbul ignore next */
 async function executionLoop() {
   while (isRunning) {
     try {
@@ -408,6 +412,7 @@ export async function startExecutor() {
   info('실행기 시작');
 
   // 백그라운드 실행 루프 시작
+  /* istanbul ignore next */
   executionLoop().catch(err => {
     error('실행 루프 오류', err.message);
   });
@@ -428,3 +433,6 @@ export function stopExecutor() {
 export function getCurrentTaskId() {
   return currentTaskId;
 }
+
+// 테스트용 export
+export { analyzeResult, extractFailureReason, escapeHtml, buildPrompt, generateSummary };

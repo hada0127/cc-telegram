@@ -317,3 +317,165 @@ describe('봇 토큰 검증 로직', () => {
     expect(validation.error).toBe('Unauthorized');
   });
 });
+
+describe('init.js export 함수 테스트', () => {
+  let initModule;
+
+  beforeAll(async () => {
+    initModule = await import('../src/init.js');
+  });
+
+  test('prompt가 export되어야 함', () => {
+    expect(typeof initModule.prompt).toBe('function');
+  });
+
+  test('callTelegramApi가 export되어야 함', () => {
+    expect(typeof initModule.callTelegramApi).toBe('function');
+  });
+
+  test('validateBotToken이 export되어야 함', () => {
+    expect(typeof initModule.validateBotToken).toBe('function');
+  });
+
+  test('waitForStartMessage가 export되어야 함', () => {
+    expect(typeof initModule.waitForStartMessage).toBe('function');
+  });
+
+  test('updateGitignore가 export되어야 함', () => {
+    expect(typeof initModule.updateGitignore).toBe('function');
+  });
+
+  test('initialize가 export되어야 함', () => {
+    expect(typeof initModule.initialize).toBe('function');
+  });
+});
+
+describe('callTelegramApi 직접 테스트', () => {
+  let initModule;
+
+  beforeAll(async () => {
+    initModule = await import('../src/init.js');
+  });
+
+  test('정상 응답 처리', async () => {
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve({
+        ok: true,
+        result: { username: 'test_bot' }
+      })
+    });
+
+    const result = await initModule.callTelegramApi('test-token', 'getMe');
+    expect(result.username).toBe('test_bot');
+  });
+
+  test('오류 응답 시 예외 발생', async () => {
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve({
+        ok: false,
+        description: 'Invalid token'
+      })
+    });
+
+    await expect(initModule.callTelegramApi('invalid-token', 'getMe'))
+      .rejects.toThrow('Telegram API 오류: Invalid token');
+  });
+});
+
+describe('validateBotToken 직접 테스트', () => {
+  let initModule;
+
+  beforeAll(async () => {
+    initModule = await import('../src/init.js');
+  });
+
+  test('유효한 토큰 검증', async () => {
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve({
+        ok: true,
+        result: { username: 'valid_bot' }
+      })
+    });
+
+    const result = await initModule.validateBotToken('valid-token');
+    expect(result.valid).toBe(true);
+    expect(result.botName).toBe('valid_bot');
+  });
+
+  test('유효하지 않은 토큰 검증', async () => {
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve({
+        ok: false,
+        description: 'Unauthorized'
+      })
+    });
+
+    const result = await initModule.validateBotToken('invalid-token');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('Telegram API 오류');
+  });
+});
+
+describe('updateGitignore 직접 테스트', () => {
+  let initModule;
+
+  beforeAll(async () => {
+    initModule = await import('../src/init.js');
+  });
+
+  test('.git이 없는 디렉토리에서 호출', async () => {
+    const noGitDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-telegram-no-git-'));
+
+    // .git이 없으면 아무것도 하지 않음
+    await initModule.updateGitignore(noGitDir);
+
+    // .gitignore가 생성되지 않아야 함
+    try {
+      await fs.access(path.join(noGitDir, '.gitignore'));
+      expect(true).toBe(false); // 파일이 있으면 실패
+    } catch {
+      expect(true).toBe(true); // 파일이 없어야 정상
+    }
+
+    await fs.rm(noGitDir, { recursive: true, force: true });
+  });
+
+  test('.git이 있고 .gitignore가 없을 때', async () => {
+    const gitDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-telegram-git-'));
+    await fs.mkdir(path.join(gitDir, '.git'), { recursive: true });
+
+    await initModule.updateGitignore(gitDir);
+
+    const content = await fs.readFile(path.join(gitDir, '.gitignore'), 'utf8');
+    expect(content).toContain('.cc-telegram');
+
+    await fs.rm(gitDir, { recursive: true, force: true });
+  });
+
+  test('.git이 있고 .gitignore에 이미 .cc-telegram이 있을 때', async () => {
+    const gitDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-telegram-git-'));
+    await fs.mkdir(path.join(gitDir, '.git'), { recursive: true });
+    await fs.writeFile(path.join(gitDir, '.gitignore'), 'node_modules/\n.cc-telegram/\n');
+
+    await initModule.updateGitignore(gitDir);
+
+    const content = await fs.readFile(path.join(gitDir, '.gitignore'), 'utf8');
+    const matches = content.match(/\.cc-telegram/g);
+    expect(matches).toHaveLength(1);
+
+    await fs.rm(gitDir, { recursive: true, force: true });
+  });
+
+  test('.git이 있고 .gitignore에 .cc-telegram이 없을 때', async () => {
+    const gitDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-telegram-git-'));
+    await fs.mkdir(path.join(gitDir, '.git'), { recursive: true });
+    await fs.writeFile(path.join(gitDir, '.gitignore'), 'node_modules/\n');
+
+    await initModule.updateGitignore(gitDir);
+
+    const content = await fs.readFile(path.join(gitDir, '.gitignore'), 'utf8');
+    expect(content).toContain('.cc-telegram');
+
+    await fs.rm(gitDir, { recursive: true, force: true });
+  });
+});

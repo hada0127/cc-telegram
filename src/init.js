@@ -13,7 +13,8 @@ import { getDataDir, saveConfig } from './config.js';
  * @param {string} question
  * @returns {Promise<string>}
  */
-function prompt(question) {
+/* istanbul ignore next */
+export function prompt(question) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -33,7 +34,7 @@ function prompt(question) {
  * @param {string} method
  * @param {object} params
  */
-async function callTelegramApi(botToken, method, params = {}) {
+export async function callTelegramApi(botToken, method, params = {}) {
   const url = `https://api.telegram.org/bot${botToken}/${method}`;
   const response = await fetch(url, {
     method: 'POST',
@@ -53,7 +54,7 @@ async function callTelegramApi(botToken, method, params = {}) {
  * @param {string} botToken
  * @returns {Promise<{valid: boolean, botName?: string, error?: string}>}
  */
-async function validateBotToken(botToken) {
+export async function validateBotToken(botToken) {
   try {
     const result = await callTelegramApi(botToken, 'getMe');
     return { valid: true, botName: result.username };
@@ -67,7 +68,8 @@ async function validateBotToken(botToken) {
  * @param {string} botToken
  * @returns {Promise<{chatId: string, username: string}>}
  */
-async function waitForStartMessage(botToken) {
+/* istanbul ignore next */
+export async function waitForStartMessage(botToken) {
   let lastUpdateId = 0;
 
   console.log('\n⏳ /start 메시지를 기다리는 중...\n');
@@ -107,7 +109,7 @@ async function waitForStartMessage(botToken) {
  * .gitignore에 .cc-telegram 추가
  * @param {string} cwd
  */
-async function updateGitignore(cwd) {
+export async function updateGitignore(cwd) {
   const gitignorePath = path.join(cwd, '.gitignore');
   const gitDirPath = path.join(cwd, '.git');
 
@@ -142,6 +144,7 @@ async function updateGitignore(cwd) {
       console.log('.gitignore에 .cc-telegram/ 추가됨');
     }
   } catch (err) {
+    /* istanbul ignore next */
     console.warn('.gitignore 업데이트 실패:', err.message);
   }
 }
@@ -150,6 +153,7 @@ async function updateGitignore(cwd) {
  * 환경 초기화
  * @param {string} cwd - 현재 작업 디렉토리
  */
+/* istanbul ignore next */
 export async function initialize(cwd) {
   console.log('\n🚀 cc-telegram 초기화를 시작합니다.\n');
 

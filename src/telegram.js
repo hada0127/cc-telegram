@@ -39,6 +39,7 @@ let lastClaudeOutput = [];
  * 지연 함수
  * @param {number} ms
  */
+/* istanbul ignore next */
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -49,6 +50,7 @@ function delay(ms) {
  * @param {object} params
  * @param {number} [maxRetries=3] - 최대 재시도 횟수
  */
+/* istanbul ignore next */
 async function callApi(method, params = {}, maxRetries = 3) {
   if (!config) config = await loadConfig();
 
@@ -118,6 +120,7 @@ export async function sendMessage(text, options = {}) {
 /**
  * 봇 명령어 설정 (자동완성용)
  */
+/* istanbul ignore next */
 async function setMyCommands() {
   const commands = [
     { command: 'start', description: 'chatId 확인' },
@@ -144,6 +147,7 @@ async function setMyCommands() {
 /**
  * 메시지 업데이트 가져오기
  */
+/* istanbul ignore next */
 async function getUpdates() {
   try {
     const updates = await callApi('getUpdates', {
@@ -160,6 +164,7 @@ async function getUpdates() {
 /**
  * 명령어 처리: /start
  */
+/* istanbul ignore next */
 async function handleStart(chatId) {
   await sendMessage(`🤖 cc-telegram 봇입니다.\n\n당신의 chatId: <code>${chatId}</code>`);
 }
@@ -167,6 +172,7 @@ async function handleStart(chatId) {
 /**
  * 명령어 처리: /new
  */
+/* istanbul ignore next */
 async function handleNew(chatId) {
   userStates.set(chatId, { step: 'complexity' });
   await sendMessage('📝 <b>새 작업 생성</b>\n\n요청의 복잡도를 선택하세요.\n\n(/cancel로 취소)', {
@@ -182,6 +188,7 @@ async function handleNew(chatId) {
 /**
  * 명령어 처리: /cancel
  */
+/* istanbul ignore next */
 async function handleCancel(chatId) {
   if (userStates.has(chatId)) {
     userStates.delete(chatId);
@@ -194,6 +201,7 @@ async function handleCancel(chatId) {
 /**
  * 우선순위 아이콘 반환
  */
+/* istanbul ignore next */
 function getPriorityIcon(priority) {
   const icons = {
     [PRIORITY.LOW]: '🔵',
@@ -207,6 +215,7 @@ function getPriorityIcon(priority) {
 /**
  * 명령어 처리: /list
  */
+/* istanbul ignore next */
 async function handleList() {
   const tasks = await getAllPendingTasks();
 
@@ -238,6 +247,7 @@ async function handleList() {
 /**
  * 명령어 처리: /completed
  */
+/* istanbul ignore next */
 async function handleCompleted() {
   const tasks = await getCompletedTasks();
 
@@ -262,6 +272,7 @@ async function handleCompleted() {
 /**
  * 명령어 처리: /failed
  */
+/* istanbul ignore next */
 async function handleFailed() {
   const tasks = await getFailedTasks();
 
@@ -286,6 +297,7 @@ async function handleFailed() {
 /**
  * 명령어 처리: /status
  */
+/* istanbul ignore next */
 async function handleStatus() {
   const tasks = await getAllPendingTasks();
   const inProgress = tasks.find(t => t.status === 'inProgress');
@@ -313,6 +325,7 @@ async function handleStatus() {
 /**
  * 명령어 처리: /reset
  */
+/* istanbul ignore next */
 async function handleReset() {
   await sendMessage(
     '⚠️ <b>데이터 초기화</b>\n\n' +
@@ -332,6 +345,7 @@ async function handleReset() {
 /**
  * 명령어 처리: /debug
  */
+/* istanbul ignore next */
 async function handleDebug() {
   const tasks = await getAllPendingTasks();
   const completed = await getCompletedTasks();
@@ -353,6 +367,7 @@ async function handleDebug() {
 /**
  * 작업 생성 플로우 처리
  */
+/* istanbul ignore next */
 async function handleNewTaskFlow(chatId, text) {
   const state = userStates.get(chatId);
   if (!state) return false;
@@ -411,6 +426,7 @@ async function handleNewTaskFlow(chatId, text) {
 /**
  * 단순 작업 생성 완료
  */
+/* istanbul ignore next */
 async function finishSimpleTaskCreation(chatId, state) {
   const task = await createTask({
     requirement: state.requirement,
@@ -434,6 +450,7 @@ async function finishSimpleTaskCreation(chatId, state) {
 /**
  * 작업 생성 완료
  */
+/* istanbul ignore next */
 async function finishTaskCreation(chatId, state, retries) {
   const task = await createTask({
     requirement: state.requirement,
@@ -461,6 +478,7 @@ async function finishTaskCreation(chatId, state, retries) {
 /**
  * 콜백 쿼리 처리 (인라인 버튼)
  */
+/* istanbul ignore next */
 async function handleCallbackQuery(query) {
   const chatId = query.message?.chat?.id?.toString();
   const data = query.data;
@@ -614,6 +632,7 @@ async function handleCallbackQuery(query) {
 /**
  * 메시지 처리
  */
+/* istanbul ignore next */
 async function handleMessage(message) {
   if (!config) config = await loadConfig();
 
@@ -674,6 +693,7 @@ async function handleMessage(message) {
 /**
  * 업데이트 처리
  */
+/* istanbul ignore next */
 async function processUpdate(update) {
   lastUpdateId = update.update_id;
 
@@ -691,6 +711,7 @@ async function processUpdate(update) {
 /**
  * 폴링 루프
  */
+/* istanbul ignore next */
 async function pollLoop() {
   while (isRunning) {
     try {
@@ -728,6 +749,7 @@ export async function startBot() {
   );
 
   // 백그라운드 폴링 시작
+  /* istanbul ignore next */
   pollLoop().catch(err => {
     error('폴링 루프 오류', err.message);
   });

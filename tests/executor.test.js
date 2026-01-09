@@ -110,7 +110,7 @@ function analyzeResult(output) {
 
   // 명시적 실패 신호가 있으면 실패
   if (hasFailureSignal) {
-    const reason = extractFailureReason(output);
+    const reason = executorModule.extractFailureReason(output);
     return { success: false, reason };
   }
 
@@ -262,7 +262,7 @@ describe('analyzeResult - 완료 신호 기반 판단', () => {
 작업이 완료되었습니다.
 ${COMPLETION_SIGNAL}`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(true);
     expect(result.reason).toBeNull();
   });
@@ -273,7 +273,7 @@ ${COMPLETION_SIGNAL}`;
 ${FAILURE_SIGNAL}
 실패 이유: 테스트가 실패했습니다`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(false);
     expect(result.reason).toContain('테스트가 실패했습니다');
   });
@@ -284,7 +284,7 @@ ${FAILURE_SIGNAL}
 ${FAILURE_SIGNAL}
 실패 이유: 검증 실패`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(false);
   });
 });
@@ -295,7 +295,7 @@ describe('analyzeResult - 패턴 기반 폴백', () => {
 Error: 파일을 찾을 수 없습니다
 `;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(false);
     expect(result.reason).toContain('파일을 찾을 수 없습니다');
   });
@@ -305,7 +305,7 @@ Error: 파일을 찾을 수 없습니다
 Fatal: 메모리 부족
 `;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(false);
     expect(result.reason).toContain('메모리 부족');
   });
@@ -315,7 +315,7 @@ Fatal: 메모리 부족
 Exception: NullPointerException
 `;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(false);
     expect(result.reason).toContain('NullPointerException');
   });
@@ -325,7 +325,7 @@ Exception: NullPointerException
 Panic: stack overflow
 `;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(false);
     expect(result.reason).toContain('stack overflow');
   });
@@ -335,7 +335,7 @@ Panic: stack overflow
 Failed to compile the project
 `;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(false);
     expect(result.reason).toContain('compile the project');
   });
@@ -345,7 +345,7 @@ Failed to compile the project
 Could not connect to database
 `;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(false);
     expect(result.reason).toContain('connect to database');
   });
@@ -355,7 +355,7 @@ Could not connect to database
 Unable to find module
 `;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(false);
     expect(result.reason).toContain('find module');
   });
@@ -365,14 +365,14 @@ Unable to find module
 컴파일 완료
 빌드 성공`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(true);
   });
 
   test('성공 지표 - successfully', () => {
     const output = `Test completed successfully.`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(true);
   });
 
@@ -380,28 +380,28 @@ Unable to find module
     const output = `테스트 실행 중...
 모든 테스트 통과`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(true);
   });
 
   test('성공 지표 - 완료됐', () => {
     const output = `작업이 완료됐습니다.`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(true);
   });
 
   test('성공 지표 - all tests passed', () => {
     const output = `All tests passed!`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(true);
   });
 
   test('성공 지표 - build succeeded', () => {
     const output = `Build succeeded!`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(true);
   });
 
@@ -411,7 +411,7 @@ Error: 일시적인 오류
 재시도 중...
 작업을 완료했습니다`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(true);
   });
 
@@ -420,7 +420,7 @@ Error: 일시적인 오류
 ...
 Error: 검증 실패`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(false);
   });
 });
@@ -430,13 +430,13 @@ describe('analyzeResult - 불확실한 경우', () => {
     const output = `작업을 진행했습니다.
 결과를 저장했습니다.`;
 
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(true);
   });
 
   test('빈 출력은 성공으로 간주해야 함', () => {
     const output = '';
-    const result = analyzeResult(output);
+    const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(true);
   });
 });
@@ -446,7 +446,7 @@ describe('extractFailureReason', () => {
     const output = `${FAILURE_SIGNAL}
 실패 이유: 빌드가 실패했습니다`;
 
-    const reason = extractFailureReason(output);
+    const reason = executorModule.extractFailureReason(output);
     expect(reason).toContain('빌드가 실패했습니다');
   });
 
@@ -454,7 +454,7 @@ describe('extractFailureReason', () => {
     const output = `${FAILURE_SIGNAL}
 Reason: Build failed due to syntax error`;
 
-    const reason = extractFailureReason(output);
+    const reason = executorModule.extractFailureReason(output);
     expect(reason).toContain('Build failed');
   });
 
@@ -462,7 +462,7 @@ Reason: Build failed due to syntax error`;
     const output = `작업 중 오류 발생
 Error: 네트워크 연결 실패`;
 
-    const reason = extractFailureReason(output);
+    const reason = executorModule.extractFailureReason(output);
     expect(reason).toContain('네트워크 연결 실패');
   });
 
@@ -470,7 +470,7 @@ Error: 네트워크 연결 실패`;
     const output = `작업 중 오류 발생
 Failed: 빌드 실패`;
 
-    const reason = extractFailureReason(output);
+    const reason = executorModule.extractFailureReason(output);
     expect(reason).toContain('빌드 실패');
   });
 
@@ -478,7 +478,7 @@ Failed: 빌드 실패`;
     const output = `작업 중 오류 발생
 실패: 테스트 실패`;
 
-    const reason = extractFailureReason(output);
+    const reason = executorModule.extractFailureReason(output);
     expect(reason).toContain('테스트 실패');
   });
 
@@ -486,42 +486,42 @@ Failed: 빌드 실패`;
     const output = `작업 중
 오류: 파일 없음`;
 
-    const reason = extractFailureReason(output);
+    const reason = executorModule.extractFailureReason(output);
     expect(reason).toContain('파일 없음');
   });
 
   test('패턴이 없으면 알 수 없는 오류 반환해야 함', () => {
     const output = '뭔가 잘못됐습니다';
-    const reason = extractFailureReason(output);
+    const reason = executorModule.extractFailureReason(output);
     expect(reason).toBe('알 수 없는 오류');
   });
 });
 
 describe('HTML 이스케이프', () => {
   test('& 문자를 이스케이프해야 함', () => {
-    expect(escapeHtml('foo & bar')).toBe('foo &amp; bar');
+    expect(executorModule.escapeHtml('foo & bar')).toBe('foo &amp; bar');
   });
 
   test('< 문자를 이스케이프해야 함', () => {
-    expect(escapeHtml('a < b')).toBe('a &lt; b');
+    expect(executorModule.escapeHtml('a < b')).toBe('a &lt; b');
   });
 
   test('> 문자를 이스케이프해야 함', () => {
-    expect(escapeHtml('a > b')).toBe('a &gt; b');
+    expect(executorModule.escapeHtml('a > b')).toBe('a &gt; b');
   });
 
   test('모든 특수 문자를 이스케이프해야 함', () => {
-    expect(escapeHtml('<script>alert("xss")</script>'))
+    expect(executorModule.escapeHtml('<script>alert("xss")</script>'))
       .toBe('&lt;script&gt;alert("xss")&lt;/script&gt;');
   });
 
   test('복합 문자열을 이스케이프해야 함', () => {
-    expect(escapeHtml('a < b & c > d'))
+    expect(executorModule.escapeHtml('a < b & c > d'))
       .toBe('a &lt; b &amp; c &gt; d');
   });
 
   test('빈 문자열은 그대로 반환해야 함', () => {
-    expect(escapeHtml('')).toBe('');
+    expect(executorModule.escapeHtml('')).toBe('');
   });
 });
 
@@ -532,7 +532,7 @@ describe('buildPrompt', () => {
       completionCriteria: '완료 조건'
     };
 
-    const prompt = buildPrompt(task);
+    const prompt = executorModule.buildPrompt(task);
     expect(prompt).toContain('테스트 작업');
     expect(prompt).toContain('완료 조건');
     expect(prompt).toContain(COMPLETION_SIGNAL);
@@ -545,7 +545,7 @@ describe('buildPrompt', () => {
       completionCriteria: null
     };
 
-    const prompt = buildPrompt(task);
+    const prompt = executorModule.buildPrompt(task);
     expect(prompt).toContain('## 완료 조건\n없음');
   });
 });
@@ -553,14 +553,14 @@ describe('buildPrompt', () => {
 describe('generateSummary', () => {
   test('성공 시 요약을 생성해야 함', () => {
     const output = '작업 완료\n모든 테스트 통과\n빌드 성공';
-    const summary = generateSummary(output, true);
+    const summary = executorModule.generateSummary(output, true);
     expect(summary).toContain('작업 완료.');
   });
 
   test('실패 시 요약을 생성해야 함', () => {
     const output = '작업 실패\n오류 발생';
     const reason = '빌드 오류';
-    const summary = generateSummary(output, false, reason);
+    const summary = executorModule.generateSummary(output, false, reason);
     expect(summary).toContain('작업 실패.');
     expect(summary).toContain('실패 원인:');
     expect(summary).toContain('빌드 오류');
@@ -568,27 +568,27 @@ describe('generateSummary', () => {
 
   test('실패 시 이유 없이 요약을 생성해야 함', () => {
     const output = '작업 실패\n오류 발생';
-    const summary = generateSummary(output, false);
+    const summary = executorModule.generateSummary(output, false);
     expect(summary).toContain('작업 실패.');
     expect(summary).not.toContain('실패 원인:');
   });
 
   test('HTML 특수 문자를 이스케이프해야 함', () => {
     const output = '<script>alert("xss")</script>';
-    const summary = generateSummary(output, true);
+    const summary = executorModule.generateSummary(output, true);
     expect(summary).toContain('&lt;script&gt;');
   });
 
   test('빈 출력도 처리해야 함', () => {
     const output = '';
-    const summary = generateSummary(output, true);
+    const summary = executorModule.generateSummary(output, true);
     expect(summary).toContain('작업 완료.');
   });
 
   test('긴 출력을 잘라야 함', () => {
     const lines = Array(20).fill('아주 긴 줄의 텍스트입니다.');
     const output = lines.join('\n');
-    const summary = generateSummary(output, true);
+    const summary = executorModule.generateSummary(output, true);
     // 마지막 5줄만 포함되어야 함
     expect(summary.split('\n').length).toBeLessThan(10);
   });
@@ -755,7 +755,7 @@ describe('executionLoop 로직 시뮬레이션', () => {
     const updatedTask = { currentRetry: 2 };
     const task = { maxRetries: 3 };
     const reason = '일시적 오류';
-    const reasonText = reason ? `\n원인: ${escapeHtml(reason.slice(0, 80))}` : '';
+    const reasonText = reason ? `\n원인: ${executorModule.escapeHtml(reason.slice(0, 80))}` : '';
 
     const message = `🔄 <b>재시도 중...</b> (${updatedTask.currentRetry}/${task.maxRetries})${reasonText}`;
 

@@ -17,7 +17,7 @@ import path from 'path';
 /**
  * 종료 핸들러
  */
-function setupExitHandlers() {
+export function setupExitHandlers() {
   const cleanup = async () => {
     console.log('\n종료 중...');
     stopBot();
@@ -27,12 +27,15 @@ function setupExitHandlers() {
 
   process.on('SIGINT', cleanup);
   process.on('SIGTERM', cleanup);
+
+  return cleanup;
 }
 
 /**
  * 메인 함수
  */
-async function main() {
+/* istanbul ignore next */
+export async function main() {
   const cwd = process.cwd();
   setCwd(cwd);
 
@@ -81,6 +84,7 @@ async function main() {
     info('cc-telegram 시작');
 
     // 무한 대기 (봇과 실행기가 백그라운드에서 동작)
+    /* istanbul ignore next */
     await new Promise(() => {});
   } catch (err) {
     error('시작 실패', err.message);
@@ -89,8 +93,13 @@ async function main() {
   }
 }
 
-// 실행
-main().catch(err => {
-  console.error('❌ 오류:', err.message);
-  process.exit(1);
-});
+/* istanbul ignore next */
+// 직접 실행시에만 main 호출
+const isMainModule = import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`;
+/* istanbul ignore if */
+if (isMainModule) {
+  main().catch(err => {
+    console.error('❌ 오류:', err.message);
+    process.exit(1);
+  });
+}

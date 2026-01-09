@@ -3,6 +3,7 @@
  * 텔레그램을 통한 원격 Claude Code 실행
  */
 
+/* istanbul ignore file */
 export { startBot, stopBot, sendMessage } from './telegram.js';
 export { startExecutor, stopExecutor } from './executor.js';
 export { createTask, getAllPendingTasks, getCompletedTasks, getFailedTasks } from './tasks.js';

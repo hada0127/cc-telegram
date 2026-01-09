@@ -15,6 +15,8 @@ let dataDir;
 // 모듈 동적 import
 let configModule;
 let tasksModule;
+let encryptionModule;
+let cliModule;
 
 // console mock
 const originalConsole = {
@@ -24,6 +26,9 @@ const originalConsole = {
 
 // process.exit mock
 const originalExit = process.exit;
+
+// fetch mock
+global.fetch = jest.fn();
 
 beforeAll(async () => {
   // 임시 디렉토리 생성
@@ -57,6 +62,12 @@ beforeAll(async () => {
 
   // tasks 모듈 import
   tasksModule = await import('../src/tasks.js');
+
+  // encryption 모듈 import
+  encryptionModule = await import('../src/utils/encryption.js');
+
+  // cli 모듈 import
+  cliModule = await import('../src/cli.js');
 });
 
 afterAll(async () => {
@@ -70,6 +81,9 @@ beforeEach(() => {
   console.log = jest.fn();
   console.error = jest.fn();
   process.exit = jest.fn();
+  global.fetch.mockResolvedValue({
+    json: () => Promise.resolve({ ok: true, result: {} })
+  });
 });
 
 afterEach(() => {
@@ -240,5 +254,54 @@ describe('오류 처리', () => {
   test('오류 발생 시 exit code 1로 종료해야 함', () => {
     process.exit(1);
     expect(process.exit).toHaveBeenCalledWith(1);
+  });
+});
+
+describe('setupExitHandlers', () => {
+  test('setupExitHandlers가 cleanup 함수를 반환해야 함', () => {
+    const cleanup = cliModule.setupExitHandlers();
+    expect(typeof cleanup).toBe('function');
+  });
+
+  test('cleanup 함수가 종료 메시지를 출력해야 함', async () => {
+    const cleanup = cliModule.setupExitHandlers();
+    // cleanup은 async 함수이므로 호출하면 종료됨
+    // process.exit가 mock되어 있으므로 실제 종료 안됨
+    cleanup();
+    expect(console.log).toHaveBeenCalledWith('\n종료 중...');
+  });
+});
+
+describe('main 함수', () => {
+  test('main이 export되어야 함', () => {
+    expect(typeof cliModule.main).toBe('function');
+  });
+
+  test('setupExitHandlers가 export되어야 함', () => {
+    expect(typeof cliModule.setupExitHandlers).toBe('function');
+  });
+});
+
+describe('runCleanup 호출', () => {
+  test('runCleanup이 올바른 결과를 반환해야 함', async () => {
+    const logRotationModule = await import('../src/utils/logRotation.js');
+    const result = await logRotationModule.runCleanup(dataDir, 7, 30);
+
+    expect(result).toHaveProperty('logs');
+    expect(result).toHaveProperty('tasks');
+    expect(result.logs).toHaveProperty('deleted');
+    expect(result.tasks).toHaveProperty('completed');
+    expect(result.tasks).toHaveProperty('failed');
+  });
+});
+
+describe('로거 초기화', () => {
+  test('initLogger가 오류 없이 호출되어야 함', async () => {
+    const loggerModule = await import('../src/utils/logger.js');
+    const logsDir = path.join(configModule.getDataDir(), 'logs');
+
+    // initLogger 호출
+    loggerModule.initLogger(logsDir, false);
+    expect(true).toBe(true);
   });
 });

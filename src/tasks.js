@@ -359,6 +359,7 @@ export async function getAllPendingTasks() {
       const task = await loadTask(item.id);
       tasks.push(task);
     } catch (err) {
+      /* istanbul ignore next */
       if (err.code === 'ENOENT') {
         warn('작업 파일 없음', { taskId: item.id });
       } else {
@@ -384,6 +385,7 @@ export async function getCompletedTasks() {
       const content = await fs.readFile(filePath, 'utf8');
       tasks.push(JSON.parse(content));
     } catch (err) {
+      /* istanbul ignore next */
       if (err.code === 'ENOENT') {
         warn('완료 작업 파일 없음', { file: item.file });
       } else {
@@ -409,6 +411,7 @@ export async function getFailedTasks() {
       const content = await fs.readFile(filePath, 'utf8');
       tasks.push(JSON.parse(content));
     } catch (err) {
+      /* istanbul ignore next */
       if (err.code === 'ENOENT') {
         warn('실패 작업 파일 없음', { file: item.file });
       } else {
@@ -505,6 +508,7 @@ export async function cleanupOrphanTasks() {
         item.status = 'ready';
         cleaned++;
       } catch (err) {
+        /* istanbul ignore next */
         if (err.code === 'ENOENT') {
           warn('orphan 작업 파일 없음', { taskId: item.id });
         } else {

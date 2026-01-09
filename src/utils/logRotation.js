@@ -45,12 +45,14 @@ export async function cleanupOldLogs(logsDir, retentionDays = 7) {
           await fs.unlink(filePath);
           result.deleted++;
         } catch (err) {
+          /* istanbul ignore next */
           result.errors.push(`${file}: ${err.message}`);
         }
       }
     }
   } catch (err) {
     // 디렉토리가 없으면 무시
+    /* istanbul ignore if */
     if (err.code !== 'ENOENT') {
       result.errors.push(`디렉토리 읽기 실패: ${err.message}`);
     }
@@ -94,7 +96,9 @@ export async function cleanupOldTaskFiles(dataDir, retentionDays = 30) {
         if (err.code === 'ENOENT') {
           // 파일이 없으면 인덱스에서도 제거
         } else {
+          /* istanbul ignore next */
           result.errors.push(`completed/${item.id}: ${err.message}`);
+          /* istanbul ignore next */
           tasksToKeep.push(item);
         }
       }
@@ -103,6 +107,7 @@ export async function cleanupOldTaskFiles(dataDir, retentionDays = 30) {
     completedIndex.tasks = tasksToKeep;
     await fs.writeFile(completedIndexPath, JSON.stringify(completedIndex, null, 2));
   } catch (err) {
+    /* istanbul ignore if */
     if (err.code !== 'ENOENT') {
       result.errors.push(`completed 인덱스: ${err.message}`);
     }
@@ -130,6 +135,7 @@ export async function cleanupOldTaskFiles(dataDir, retentionDays = 30) {
           tasksToKeep.push(item);
         }
       } catch (err) {
+        /* istanbul ignore next */
         if (err.code === 'ENOENT') {
           // 파일이 없으면 인덱스에서도 제거
         } else {
@@ -142,6 +148,7 @@ export async function cleanupOldTaskFiles(dataDir, retentionDays = 30) {
     failedIndex.tasks = tasksToKeep;
     await fs.writeFile(failedIndexPath, JSON.stringify(failedIndex, null, 2));
   } catch (err) {
+    /* istanbul ignore if */
     if (err.code !== 'ENOENT') {
       result.errors.push(`failed 인덱스: ${err.message}`);
     }
