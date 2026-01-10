@@ -545,11 +545,12 @@ async function handleCallbackQuery(query) {
       state.step = 'retries';
       userStates.set(chatId, state);
 
+      const defaultRetries = config?.defaultMaxRetries || 15;
       await sendMessage('4단계: 반복 횟수를 선택하세요.', {
         reply_markup: {
           inline_keyboard: [
             [
-              { text: '10회 실행', callback_data: 'retry_10' },
+              { text: `${defaultRetries}회 실행 (기본값)`, callback_data: 'retry_default' },
               { text: '직접 입력', callback_data: 'retry_custom' }
             ]
           ]
@@ -561,11 +562,12 @@ async function handleCallbackQuery(query) {
     return;
   }
 
-  // 반복 횟수 선택
-  if (data === 'retry_10') {
+  // 반복 횟수 선택 - 기본값
+  if (data === 'retry_default') {
     const state = userStates.get(chatId);
     if (state && state.step === 'retries') {
-      await finishTaskCreation(chatId, state, 10);
+      const defaultRetries = config?.defaultMaxRetries || 15;
+      await finishTaskCreation(chatId, state, defaultRetries);
     } else {
       await sendMessage('⚠️ 작업 생성 세션이 만료되었습니다. /new로 다시 시작해주세요.');
     }
