@@ -12,6 +12,7 @@ import { startBot, stopBot } from './telegram.js';
 import { startExecutor, stopExecutor } from './executor.js';
 import { initLogger, info, error } from './utils/logger.js';
 import { runCleanup } from './utils/logRotation.js';
+import { t } from './i18n.js';
 import path from 'path';
 
 /**
@@ -19,7 +20,7 @@ import path from 'path';
  */
 export function setupExitHandlers() {
   const cleanup = async () => {
-    console.log('\n종료 중...');
+    console.log(`\n${t('app.shutting_down')}`);
     stopBot();
     stopExecutor();
     process.exit(0);
@@ -39,7 +40,7 @@ export async function main() {
   const cwd = process.cwd();
   setCwd(cwd);
 
-  console.log('🤖 cc-telegram - 텔레그램을 통한 원격 Claude Code 실행\n');
+  console.log(`🤖 ${t('app.name')} - ${t('app.description')}\n`);
 
   // 설정 파일 확인
   const hasConfig = await configExists();
@@ -60,7 +61,7 @@ export async function main() {
   // orphan 작업 정리
   const cleaned = await cleanupOrphanTasks();
   if (cleaned > 0) {
-    info(`${cleaned}개의 orphan 작업 정리됨`);
+    info(t('cli.orphan_tasks_cleaned', { count: cleaned }));
   }
 
   // 로그 로테이션 실행
@@ -69,10 +70,10 @@ export async function main() {
   const cleanupResult = await runCleanup(dataDir, config.logRetentionDays, 30);
 
   if (cleanupResult.logs.deleted > 0) {
-    info(`${cleanupResult.logs.deleted}개의 오래된 로그 파일 삭제됨`);
+    info(t('cli.old_logs_deleted', { count: cleanupResult.logs.deleted }));
   }
   if (cleanupResult.tasks.completed > 0 || cleanupResult.tasks.failed > 0) {
-    info(`오래된 작업 파일 삭제: 완료 ${cleanupResult.tasks.completed}개, 실패 ${cleanupResult.tasks.failed}개`);
+    info(t('cli.old_tasks_deleted', { completed: cleanupResult.tasks.completed, failed: cleanupResult.tasks.failed }));
   }
 
   // 봇 및 실행기 시작
@@ -80,15 +81,15 @@ export async function main() {
     await startBot();
     await startExecutor();
 
-    console.log('✅ 봇이 실행중입니다. Ctrl+C로 종료할 수 있습니다.\n');
-    info('cc-telegram 시작');
+    console.log(`✅ ${t('cli.bot_running')}\n`);
+    info(t('cli.started'));
 
     // 무한 대기 (봇과 실행기가 백그라운드에서 동작)
     /* istanbul ignore next */
     await new Promise(() => {});
   } catch (err) {
-    error('시작 실패', err.message);
-    console.error('❌ 시작 실패:', err.message);
+    error(t('app.start_failed'), err.message);
+    console.error(`❌ ${t('app.start_failed')}:`, err.message);
     process.exit(1);
   }
 }
@@ -100,7 +101,7 @@ const isMainModule = import.meta.url === fileUrl;
 /* istanbul ignore if */
 if (isMainModule) {
   main().catch(err => {
-    console.error('❌ 오류:', err.message);
+    console.error(`❌ ${t('app.error')}:`, err.message);
     process.exit(1);
   });
 }

@@ -15,6 +15,7 @@ import {
 import { loadConfig } from './config.js';
 import { sendMessage, updateClaudeOutput, clearClaudeOutput } from './telegram.js';
 import { info, error, debug } from './utils/logger.js';
+import { t } from './i18n.js';
 
 let isRunning = false;
 let cachedClaudeCommand = null;
@@ -154,7 +155,7 @@ async function runClaude(prompt, cwd, taskId, isParallel = false) {
     // 타임아웃 (30분)
     const timeout = setTimeout(() => {
       proc.kill('SIGTERM');
-      reject(new Error('실행 시간 초과 (30분)'));
+      reject(new Error(t('executor.timeout_error')));
     }, 30 * 60 * 1000);
 
     proc.on('close', (exitCode) => {
@@ -179,25 +180,25 @@ const FAILURE_SIGNAL = '<promise>FAILED</promise>';
  * @returns {string}
  */
 function buildPrompt(task) {
-  return `# 작업 요청
+  return `# ${t('prompt.title')}
 
-## 요구사항
+## ${t('prompt.requirement')}
 ${task.requirement}
 
-## 완료 조건
-${task.completionCriteria || '없음'}
+## ${t('prompt.completion_criteria')}
+${task.completionCriteria || t('prompt.none')}
 
-## 지시사항
-- 위 요구사항을 수행하고 완료 조건을 충족시켜주세요.
-- 작업이 완료되면 완료 조건이 충족되었는지 확인해주세요.
-- 완료 조건을 충족하지 못했다면 그 이유를 설명해주세요.
+## ${t('prompt.instructions_title')}
+- ${t('prompt.instruction1')}
+- ${t('prompt.instruction2')}
+- ${t('prompt.instruction3')}
 
-## 완료 신호 (중요!)
-- 모든 작업을 완료하고 완료 조건을 충족했다면 반드시 다음 신호를 출력해주세요:
+## ${t('prompt.signal_title')}
+- ${t('prompt.signal_complete')}
   ${COMPLETION_SIGNAL}
-- 작업을 완료할 수 없거나 완료 조건을 충족하지 못했다면 다음 신호와 함께 이유를 출력해주세요:
+- ${t('prompt.signal_failed')}
   ${FAILURE_SIGNAL}
-  실패 이유: [구체적인 이유]
+  ${t('prompt.failure_reason')}
 `;
 }
 
@@ -270,7 +271,7 @@ function analyzeResult(output) {
           return { success: true, reason: null };
         }
       }
-      return { success: false, reason: match[1]?.trim() || '오류 발생' };
+      return { success: false, reason: match[1]?.trim() || t('executor.unknown_error') };
     }
   }
 
@@ -280,7 +281,7 @@ function analyzeResult(output) {
   }
 
   // 3. 완료 신호도 없고 명확한 판단이 안되면 불확실 (성공으로 간주하되 경고)
-  debug('완료 신호 없음 - 불확실한 결과, 성공으로 간주');
+  debug('No completion signal - uncertain result, assuming success');
   return { success: true, reason: null };
 }
 
@@ -291,7 +292,7 @@ function analyzeResult(output) {
  */
 function extractFailureReason(output) {
   // 실패 신호 이후의 "실패 이유:" 패턴 찾기
-  const failureMatch = output.match(/<promise>FAILED<\/promise>\s*(?:실패 이유:|Reason:)?\s*(.{1,200})/i);
+  const failureMatch = output.match(/<promise>FAILED<\/promise>\s*(?:실패 이유:|Reason:|Failure reason:)?\s*(.{1,200})/i);
   if (failureMatch) {
     return failureMatch[1].trim();
   }
@@ -311,7 +312,7 @@ function extractFailureReason(output) {
     }
   }
 
-  return '알 수 없는 오류';
+  return t('executor.unknown_error');
 }
 
 /**
@@ -327,11 +328,10 @@ function generateSummary(output, success, reason = null) {
   const lastLines = escapeHtml(lines.slice(-5).join('\n'));
 
   if (success) {
-    return `작업 완료. ${lastLines.slice(0, 250)}`;
+    return t('executor.task_done', { output: lastLines.slice(0, 250) });
   } else {
     // 실패 이유가 있으면 포함
-    const reasonText = reason ? `\n실패 원인: ${escapeHtml(reason)}` : '';
-    return `작업 실패.${reasonText}\n${lastLines.slice(0, 200)}`;
+    return t('executor.task_fail_summary', { reason: escapeHtml(reason || ''), output: lastLines.slice(0, 200) });
   }
 }
 
@@ -346,19 +346,22 @@ async function processTask(task, isParallel = false) {
   const prefix = isParallel ? `[${shortId}] ` : '';
 
   try {
-    info('작업 시작', { taskId: task.id, requirement: task.requirement.slice(0, 50) });
+    info('Task started', { taskId: task.id, requirement: task.requirement.slice(0, 50) });
 
     // CLI에 작업 시작 표시
     console.log('\n' + '='.repeat(60));
-    console.log(`${prefix}[작업 시작] ${task.id}`);
-    console.log(`${prefix}요구사항: ${task.requirement.slice(0, 100)}`);
+    console.log(`${prefix}${t('executor.console_task_start', { id: task.id })}`);
+    console.log(`${prefix}${t('executor.console_requirement', { text: task.requirement.slice(0, 100) })}`);
     console.log('='.repeat(60) + '\n');
 
     // 작업 시작
     await startTask(task.id);
     runningTasks.set(task.id, { startedAt: new Date() });
 
-    await sendMessage(`🚀 <b>작업 시작</b>${isParallel ? ` [${runningTasks.size}개 실행 중]` : ''}\n\n${task.requirement.slice(0, 100)}...`);
+    const taskStartMsg = isParallel
+      ? `🚀 <b>${t('executor.task_start_parallel', { count: runningTasks.size })}</b>`
+      : `🚀 <b>${t('executor.task_start')}</b>`;
+    await sendMessage(`${taskStartMsg}\n\n${task.requirement.slice(0, 100)}...`);
 
     // 작업 실행
     const prompt = buildPrompt(task);
@@ -371,7 +374,7 @@ async function processTask(task, isParallel = false) {
     // exitCode가 0이 아니면 실패
     if (exitCode !== 0) {
       success = false;
-      reason = `프로세스 종료 코드: ${exitCode}`;
+      reason = t('executor.exit_code_error', { code: exitCode });
     } else {
       // 출력 분석
       const result = analyzeResult(output);
@@ -387,31 +390,31 @@ async function processTask(task, isParallel = false) {
 
       // CLI에 작업 완료 표시
       console.log('\n' + '-'.repeat(60));
-      console.log(`${prefix}[작업 완료] ${task.id} (${totalRetries}/${task.maxRetries}회)`);
+      console.log(`${prefix}${t('executor.console_task_complete', { id: task.id, current: totalRetries, max: task.maxRetries })}`);
       console.log('-'.repeat(60) + '\n');
 
       await sendMessage(
-        `✅ <b>작업 완료!</b>\n\n` +
-        `📝 요구사항: ${task.requirement}\n\n` +
-        `🔄 반복횟수: ${totalRetries}/${task.maxRetries}회\n\n` +
-        `📋 요약:\n${summary}`
+        `✅ <b>${t('executor.task_complete')}</b>\n\n` +
+        `📝 ${t('executor.requirement_label', { text: task.requirement })}\n\n` +
+        `🔄 ${t('executor.retries_count', { current: totalRetries, max: task.maxRetries })}\n\n` +
+        `📋 ${t('executor.summary_label')}\n${summary}`
       );
-      info('작업 완료', { taskId: task.id });
+      info('Task completed', { taskId: task.id });
     } else {
       // 실패 - 재시도 가능한지 확인
       const { task: updatedTask, canRetry } = await incrementRetry(task.id);
 
       if (canRetry) {
         // 재시도
-        info('작업 재시도', { taskId: task.id, retry: updatedTask.currentRetry, reason });
+        info('Task retry', { taskId: task.id, retry: updatedTask.currentRetry, reason });
 
         console.log('\n' + '-'.repeat(60));
-        console.log(`${prefix}[재시도] ${task.id} (${updatedTask.currentRetry}/${task.maxRetries})`);
-        if (reason) console.log(`${prefix}원인: ${reason.slice(0, 100)}`);
+        console.log(`${prefix}${t('executor.console_task_retry', { id: task.id, current: updatedTask.currentRetry, max: task.maxRetries })}`);
+        if (reason) console.log(`${prefix}${t('executor.console_retry_reason', { reason: reason.slice(0, 100) })}`);
         console.log('-'.repeat(60) + '\n');
 
-        const reasonText = reason ? `\n원인: ${escapeHtml(reason)}` : '';
-        await sendMessage(`🔄 <b>재시도 예정...</b> (${updatedTask.currentRetry}/${task.maxRetries})${reasonText}`);
+        const reasonText = reason ? `\n${t('executor.retry_reason', { reason: escapeHtml(reason) })}` : '';
+        await sendMessage(`🔄 <b>${t('executor.task_retry', { current: updatedTask.currentRetry, max: task.maxRetries })}</b>${reasonText}`);
       } else {
         // 최종 실패
         const summary = generateSummary(output, false, reason);
@@ -419,21 +422,21 @@ async function processTask(task, isParallel = false) {
         const totalRetries = updatedTask.currentRetry;
 
         console.log('\n' + '-'.repeat(60));
-        console.log(`${prefix}[작업 실패] ${task.id} (${totalRetries}/${task.maxRetries}회 시도)`);
-        if (reason) console.log(`${prefix}원인: ${reason.slice(0, 100)}`);
+        console.log(`${prefix}${t('executor.console_task_failed', { id: task.id, current: totalRetries, max: task.maxRetries })}`);
+        if (reason) console.log(`${prefix}${t('executor.console_retry_reason', { reason: reason.slice(0, 100) })}`);
         console.log('-'.repeat(60) + '\n');
 
         await sendMessage(
-          `❌ <b>작업 실패</b>\n\n` +
-          `📝 요구사항: ${task.requirement}\n\n` +
-          `🔄 반복횟수: ${totalRetries}/${task.maxRetries}회 시도 후 실패\n\n` +
-          `📋 요약:\n${summary}`
+          `❌ <b>${t('executor.task_failed')}</b>\n\n` +
+          `📝 ${t('executor.requirement_label', { text: task.requirement })}\n\n` +
+          `🔄 ${t('executor.retries_after_fail', { current: totalRetries, max: task.maxRetries })}\n\n` +
+          `📋 ${t('executor.summary_label')}\n${summary}`
         );
-        info('작업 실패', { taskId: task.id, reason });
+        info('Task failed', { taskId: task.id, reason });
       }
     }
   } catch (err) {
-    error('작업 처리 오류', { taskId: task.id, error: err.message });
+    error('Task processing error', { taskId: task.id, error: err.message });
   } finally {
     runningTasks.delete(task.id);
   }
@@ -458,7 +461,7 @@ async function sequentialLoop() {
       // 다음 작업 전 짧은 대기
       await new Promise(resolve => setTimeout(resolve, 2000));
     } catch (err) {
-      error('순차 실행 루프 오류', err.message);
+      error('Sequential loop error', err.message);
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }
@@ -470,7 +473,7 @@ async function sequentialLoop() {
  */
 /* istanbul ignore next */
 async function parallelLoop(maxParallel) {
-  console.log(`\n🔄 병렬 실행 모드: 최대 ${maxParallel}개 동시 실행\n`);
+  console.log(`\n🔄 ${t('executor.parallel_mode', { count: maxParallel })}\n`);
 
   while (isRunning) {
     try {
@@ -505,7 +508,7 @@ async function parallelLoop(maxParallel) {
 
         // 작업 시작 (백그라운드)
         processTask(task, true).catch(err => {
-          error('병렬 작업 오류', { taskId: task.id, error: err.message });
+          error('Parallel task error', { taskId: task.id, error: err.message });
         });
 
         // 작업 시작 간 약간의 딜레이
@@ -515,7 +518,7 @@ async function parallelLoop(maxParallel) {
       // 다음 확인 전 짧은 대기
       await new Promise(resolve => setTimeout(resolve, 2000));
     } catch (err) {
-      error('병렬 실행 루프 오류', err.message);
+      error('Parallel loop error', err.message);
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }
@@ -528,7 +531,7 @@ export async function startExecutor() {
   if (isRunning) return;
 
   isRunning = true;
-  info('실행기 시작');
+  info('Executor started');
 
   const config = await loadConfig();
 
@@ -536,11 +539,11 @@ export async function startExecutor() {
   /* istanbul ignore next */
   if (config.parallelExecution) {
     parallelLoop(config.maxParallel).catch(err => {
-      error('병렬 실행 루프 오류', err.message);
+      error('Parallel loop error', err.message);
     });
   } else {
     sequentialLoop().catch(err => {
-      error('순차 실행 루프 오류', err.message);
+      error('Sequential loop error', err.message);
     });
   }
 }
@@ -550,7 +553,7 @@ export async function startExecutor() {
  */
 export function stopExecutor() {
   isRunning = false;
-  info('실행기 중지');
+  info('Executor stopped');
 }
 
 /**

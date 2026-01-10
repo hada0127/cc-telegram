@@ -7,6 +7,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import readline from 'readline';
 import { getDataDir, saveConfig } from './config.js';
+import { t } from './i18n.js';
 
 /**
  * readline 인터페이스로 사용자 입력 받기
@@ -44,7 +45,7 @@ export async function callTelegramApi(botToken, method, params = {}) {
 
   const data = await response.json();
   if (!data.ok) {
-    throw new Error(`Telegram API 오류: ${data.description}`);
+    throw new Error(`Telegram API error: ${data.description}`);
   }
   return data.result;
 }
@@ -72,7 +73,7 @@ export async function validateBotToken(botToken) {
 export async function waitForStartMessage(botToken) {
   let lastUpdateId = 0;
 
-  console.log('\n⏳ /start 메시지를 기다리는 중...\n');
+  console.log(`\n⏳ ${t('init.waiting_for_start')}\n`);
 
   while (true) {
     try {
@@ -92,7 +93,7 @@ export async function waitForStartMessage(botToken) {
           // 사용자에게 chatId 알려주기
           await callTelegramApi(botToken, 'sendMessage', {
             chat_id: chatId,
-            text: `🔑 당신의 chatId: ${chatId}\n\nCLI에서 이 값을 입력하세요.`
+            text: `🔑 ${t('init.your_chatid', { chatId })}\n\n${t('init.enter_chatid_in_cli')}`
           });
 
           return { chatId, username };
@@ -141,11 +142,12 @@ export async function updateGitignore(cwd) {
         ? (content.endsWith('\n') ? `${content}\n${entry}` : `${content}\n\n${entry}`)
         : entry;
       await fs.writeFile(gitignorePath, newContent);
-      console.log('.gitignore에 .cc-telegram/ 추가됨');
+      console.log(t('init.gitignore_updated'));
     }
   } catch (err) {
     /* istanbul ignore next */
-    console.warn('.gitignore 업데이트 실패:', err.message);
+    // internal warning - not translated
+    console.warn('gitignore update failed:', err.message);
   }
 }
 
@@ -155,12 +157,12 @@ export async function updateGitignore(cwd) {
  */
 /* istanbul ignore next */
 export async function initialize(cwd) {
-  console.log('\n🚀 cc-telegram 초기화를 시작합니다.\n');
+  console.log(`\n🚀 ${t('init.starting')}\n`);
 
   const dataDir = getDataDir();
 
   // 1. 폴더 생성
-  console.log('📁 폴더 구조 생성 중...');
+  console.log(`📁 ${t('init.creating_folders')}`);
   await fs.mkdir(dataDir, { recursive: true });
   await fs.mkdir(path.join(dataDir, 'tasks'), { recursive: true });
   await fs.mkdir(path.join(dataDir, 'completed'), { recursive: true });
@@ -188,94 +190,94 @@ export async function initialize(cwd) {
   await updateGitignore(cwd);
 
   // 4. 사용자 정보 입력
-  console.log('\n📱 텔레그램 봇 설정\n');
-  console.log('1. @BotFather에서 봇을 생성하고 토큰을 받으세요.');
-  console.log('   (https://t.me/BotFather 에서 /newbot 명령어 사용)\n');
+  console.log(`\n📱 ${t('init.telegram_setup')}\n`);
+  console.log(`${t('init.botfather_instruction1')}`);
+  console.log(`   ${t('init.botfather_instruction2')}\n`);
 
-  const botToken = await prompt('봇 토큰을 입력하세요: ');
+  const botToken = await prompt(t('init.enter_bot_token'));
 
   if (!botToken) {
-    throw new Error('봇 토큰이 필요합니다.');
+    throw new Error(t('init.bot_token_required'));
   }
 
   // 5. 봇 토큰 유효성 검사
-  console.log('\n🔍 봇 토큰 확인 중...');
+  console.log(`\n🔍 ${t('init.validating_token')}`);
   const validation = await validateBotToken(botToken);
 
   if (!validation.valid) {
-    throw new Error(`유효하지 않은 봇 토큰: ${validation.error}`);
+    throw new Error(t('init.invalid_token', { error: validation.error }));
   }
 
-  console.log(`✅ 봇 확인됨: @${validation.botName}`);
+  console.log(`✅ ${t('init.bot_confirmed', { botName: validation.botName })}`);
 
   // 6. /start 메시지 대기
-  console.log('\n2. 텔레그램에서 봇(@' + validation.botName + ')에게 /start 메시지를 보내세요.');
+  console.log(`\n${t('init.send_start_instruction', { botName: validation.botName })}`);
 
   const { chatId: detectedChatId, username } = await waitForStartMessage(botToken);
 
-  console.log(`\n📨 메시지 수신됨!`);
-  console.log(`   사용자: ${username}`);
-  console.log(`   chatId: ${detectedChatId}\n`);
+  console.log(`\n📨 ${t('init.message_received')}`);
+  console.log(`   ${t('init.user', { username })}`);
+  console.log(`   ${t('init.chatid_received', { chatId: detectedChatId })}\n`);
 
   // 7. chatId 검증 입력
-  const inputChatId = await prompt('위 chatId를 입력하여 확인하세요: ');
+  const inputChatId = await prompt(t('init.enter_chatid'));
 
   if (inputChatId !== detectedChatId) {
-    throw new Error('chatId가 일치하지 않습니다. 다시 시도해주세요.');
+    throw new Error(t('init.chatid_mismatch'));
   }
 
   // 8. 기본 반복횟수 입력
-  console.log('\n⚙️ 기본 설정\n');
-  const maxRetriesInput = await prompt('기본 반복횟수를 입력하세요 (15 권장): ');
+  console.log(`\n⚙️ ${t('init.default_settings')}\n`);
+  const maxRetriesInput = await prompt(t('init.enter_max_retries', { recommended: '15' }));
   const defaultMaxRetries = parseInt(maxRetriesInput, 10) || 15;
 
   // 9. 병렬 실행 설정
-  console.log('\n🔄 병렬 실행 설정\n');
-  console.log('여러 작업을 동시에 실행할 수 있습니다.');
-  console.log('주의: 병렬 실행 시 시스템 리소스를 더 많이 사용합니다.\n');
-  const parallelInput = await prompt('병렬 실행을 사용하시겠습니까? (y/N): ');
+  console.log(`\n🔄 ${t('init.parallel_settings')}\n`);
+  console.log(t('init.parallel_description'));
+  console.log(`${t('init.parallel_warning')}\n`);
+  const parallelInput = await prompt(t('init.enable_parallel'));
   const parallelExecution = parallelInput.toLowerCase() === 'y';
 
   let maxParallel = 3;
   if (parallelExecution) {
-    const maxParallelInput = await prompt('최대 동시 실행 개수를 입력하세요 (3 권장): ');
+    const maxParallelInput = await prompt(t('init.enter_max_parallel', { recommended: '3' }));
     maxParallel = parseInt(maxParallelInput, 10) || 3;
     if (maxParallel < 1) maxParallel = 1;
     if (maxParallel > 10) maxParallel = 10;
-    console.log(`✅ 병렬 실행: 최대 ${maxParallel}개 동시 실행`);
+    console.log(`✅ ${t('init.parallel_enabled', { count: maxParallel })}`);
   } else {
-    console.log('✅ 순차 실행 모드');
+    console.log(`✅ ${t('init.sequential_mode')}`);
   }
 
   // 10. 설정 저장
   await saveConfig({ botToken, chatId: detectedChatId, debugMode: false, defaultMaxRetries, parallelExecution, maxParallel });
 
   // 11. 봇 명령어 등록 (자동완성용)
-  console.log('📝 봇 명령어 등록 중...');
+  console.log(`📝 ${t('init.registering_commands')}`);
   const commands = [
-    { command: 'start', description: 'chatId 확인' },
-    { command: 'new', description: '새 작업 생성' },
-    { command: 'list', description: '대기/진행중 작업 목록' },
-    { command: 'completed', description: '완료된 작업 목록' },
-    { command: 'failed', description: '실패한 작업 목록' },
-    { command: 'status', description: '현재 작업 상태' },
-    { command: 'debug', description: '시스템 상태' },
-    { command: 'cancel', description: '작업 생성 취소' }
+    { command: 'start', description: t('telegram.cmd_start') },
+    { command: 'new', description: t('telegram.cmd_new') },
+    { command: 'list', description: t('telegram.cmd_list') },
+    { command: 'completed', description: t('telegram.cmd_completed') },
+    { command: 'failed', description: t('telegram.cmd_failed') },
+    { command: 'status', description: t('telegram.cmd_status') },
+    { command: 'debug', description: t('telegram.cmd_debug') },
+    { command: 'cancel', description: t('telegram.cmd_cancel') }
   ];
 
   try {
     await callTelegramApi(botToken, 'setMyCommands', { commands });
-    console.log('✅ 봇 명령어 등록 완료');
+    console.log(`✅ ${t('init.commands_registered')}`);
   } catch (err) {
-    console.warn('⚠️ 봇 명령어 등록 실패:', err.message);
+    console.warn(`⚠️ ${t('init.commands_failed', { error: err.message })}`);
   }
 
   // 확인 메시지 전송
   await callTelegramApi(botToken, 'sendMessage', {
     chat_id: detectedChatId,
-    text: '✅ cc-telegram 설정이 완료되었습니다!\n\n봇이 시작되면 알림을 받을 수 있습니다.\n\n/를 입력하면 명령어 목록을 볼 수 있습니다.'
+    text: t('init.setup_complete_telegram')
   });
 
-  console.log('\n✅ 초기화가 완료되었습니다!');
-  console.log('   npx cc-telegram 을 실행하면 텔레그램 봇이 시작됩니다.\n');
+  console.log(`\n✅ ${t('init.init_complete')}`);
+  console.log(`   ${t('init.run_instruction')}\n`);
 }

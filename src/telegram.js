@@ -16,14 +16,17 @@ import {
   PRIORITY
 } from './tasks.js';
 import { info, error, debug } from './utils/logger.js';
+import { t, getCurrentLanguage } from './i18n.js';
 
-// 우선순위 레이블
-const PRIORITY_LABELS = {
-  [PRIORITY.LOW]: '🔵 낮음',
-  [PRIORITY.NORMAL]: '🟢 보통',
-  [PRIORITY.HIGH]: '🟠 높음',
-  [PRIORITY.URGENT]: '🔴 긴급'
-};
+// 우선순위 레이블 (동적 생성)
+function getPriorityLabels() {
+  return {
+    [PRIORITY.LOW]: `🔵 ${t('telegram.priority_low')}`,
+    [PRIORITY.NORMAL]: `🟢 ${t('telegram.priority_normal')}`,
+    [PRIORITY.HIGH]: `🟠 ${t('telegram.priority_high')}`,
+    [PRIORITY.URGENT]: `🔴 ${t('telegram.priority_urgent')}`
+  };
+}
 
 let config = null;
 let lastUpdateId = 0;
@@ -70,11 +73,11 @@ async function callApi(method, params = {}, maxRetries = 3) {
         // 429 (Too Many Requests) - 재시도
         if (response.status === 429) {
           const retryAfter = data.parameters?.retry_after || 5;
-          debug(`API 요청 제한, ${retryAfter}초 후 재시도`);
+          debug(`API rate limited, retry after ${retryAfter}s`);
           await delay(retryAfter * 1000);
           continue;
         }
-        throw new Error(`Telegram API 오류: ${data.description}`);
+        throw new Error(`Telegram API error: ${data.description}`);
       }
       return data.result;
     } catch (err) {
@@ -83,7 +86,7 @@ async function callApi(method, params = {}, maxRetries = 3) {
       // 네트워크 오류인 경우 재시도
       if (attempt < maxRetries && (err.name === 'TypeError' || err.message.includes('fetch'))) {
         const backoff = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
-        debug(`API 호출 실패, ${backoff / 1000}초 후 재시도`, { method, attempt: attempt + 1 });
+        debug(`API call failed, retry after ${backoff / 1000}s`, { method, attempt: attempt + 1 });
         await delay(backoff);
         continue;
       }
@@ -112,7 +115,7 @@ export async function sendMessage(text, options = {}) {
     });
     return true;
   } catch (err) {
-    error('메시지 전송 실패', err.message);
+    error('Message send failed', err.message);
     return false;
   }
 }
@@ -123,24 +126,24 @@ export async function sendMessage(text, options = {}) {
 /* istanbul ignore next */
 async function setMyCommands() {
   const commands = [
-    { command: 'start', description: 'chatId 확인' },
-    { command: 'new', description: '새 작업 생성' },
-    { command: 'list', description: '대기/진행중 작업 목록' },
-    { command: 'completed', description: '완료된 작업 목록' },
-    { command: 'failed', description: '실패한 작업 목록' },
-    { command: 'status', description: '현재 작업 상태' },
-    { command: 'debug', description: '시스템 상태' },
-    { command: 'cancel', description: '작업 생성 취소' },
-    { command: 'reset', description: '모든 데이터 초기화' }
+    { command: 'start', description: t('telegram.cmd_start') },
+    { command: 'new', description: t('telegram.cmd_new') },
+    { command: 'list', description: t('telegram.cmd_list') },
+    { command: 'completed', description: t('telegram.cmd_completed') },
+    { command: 'failed', description: t('telegram.cmd_failed') },
+    { command: 'status', description: t('telegram.cmd_status') },
+    { command: 'debug', description: t('telegram.cmd_debug') },
+    { command: 'cancel', description: t('telegram.cmd_cancel') },
+    { command: 'reset', description: t('telegram.cmd_reset') }
   ];
 
   try {
     // 기존 명령어 삭제 후 새로 설정 (캐시 문제 방지)
     await callApi('deleteMyCommands', {});
     await callApi('setMyCommands', { commands });
-    debug('봇 명령어 설정 완료');
+    debug('Bot commands set');
   } catch (err) {
-    error('봇 명령어 설정 실패', err.message);
+    error('Failed to set bot commands', err.message);
   }
 }
 
@@ -166,7 +169,7 @@ async function getUpdates() {
  */
 /* istanbul ignore next */
 async function handleStart(chatId) {
-  await sendMessage(`🤖 cc-telegram 봇입니다.\n\n당신의 chatId: <code>${chatId}</code>`);
+  await sendMessage(`🤖 ${t('telegram.bot_greeting', { chatId })}`);
 }
 
 /**
@@ -175,11 +178,11 @@ async function handleStart(chatId) {
 /* istanbul ignore next */
 async function handleNew(chatId) {
   userStates.set(chatId, { step: 'complexity' });
-  await sendMessage('📝 <b>새 작업 생성</b>\n\n요청의 복잡도를 선택하세요.\n\n(/cancel로 취소)', {
+  await sendMessage(`📝 <b>${t('telegram.new_task_title')}</b>\n\n${t('telegram.select_complexity')}\n\n${t('telegram.cancel_hint')}`, {
     reply_markup: {
       inline_keyboard: [[
-        { text: '단순(완료 조건, 반복 없음)', callback_data: 'complexity_simple' },
-        { text: '복잡(완료 조건, 반복 있음)', callback_data: 'complexity_complex' }
+        { text: t('telegram.complexity_simple'), callback_data: 'complexity_simple' },
+        { text: t('telegram.complexity_complex'), callback_data: 'complexity_complex' }
       ]]
     }
   });
@@ -192,9 +195,9 @@ async function handleNew(chatId) {
 async function handleCancel(chatId) {
   if (userStates.has(chatId)) {
     userStates.delete(chatId);
-    await sendMessage('❌ 작업 생성이 취소되었습니다.');
+    await sendMessage(`❌ ${t('telegram.task_cancelled')}`);
   } else {
-    await sendMessage('취소할 작업이 없습니다.');
+    await sendMessage(t('telegram.no_task_to_cancel'));
   }
 }
 
@@ -220,7 +223,7 @@ async function handleList() {
   const tasks = await getAllPendingTasks();
 
   if (tasks.length === 0) {
-    await sendMessage('📋 대기/진행중인 작업이 없습니다.');
+    await sendMessage(`📋 ${t('telegram.no_pending_tasks')}`);
     return;
   }
 
@@ -239,7 +242,7 @@ async function handleList() {
     }])
   };
 
-  await sendMessage('📋 <b>작업 목록</b>\n\n작업을 선택하면 취소할 수 있습니다.\n(🔴긴급 🟠높음 🟢보통 🔵낮음)', {
+  await sendMessage(`📋 <b>${t('telegram.task_list_title')}</b>\n\n${t('telegram.task_list_hint')}\n${t('telegram.priority_legend')}`, {
     reply_markup: keyboard
   });
 }
@@ -252,18 +255,19 @@ async function handleCompleted() {
   const tasks = await getCompletedTasks();
 
   if (tasks.length === 0) {
-    await sendMessage('✅ 완료된 작업이 없습니다.');
+    await sendMessage(`✅ ${t('telegram.no_completed_tasks')}`);
     return;
   }
 
-  let text = '✅ <b>완료된 작업</b>\n\n';
+  const lang = getCurrentLanguage();
+  let text = `✅ <b>${t('telegram.completed_tasks_title')}</b>\n\n`;
   for (const task of tasks.slice(-10)) {
-    const date = new Date(task.completedAt).toLocaleDateString('ko-KR');
-    text += `• ${task.requirement.slice(0, 40)}...\n  └ ${date} (${task.totalRetries}회 시도)\n\n`;
+    const date = new Date(task.completedAt).toLocaleDateString(lang === 'ko' ? 'ko-KR' : lang);
+    text += `${t('telegram.task_item', { requirement: task.requirement.slice(0, 40), date, retries: task.totalRetries })}\n\n`;
   }
 
   if (tasks.length > 10) {
-    text += `\n... 외 ${tasks.length - 10}개`;
+    text += `\n${t('telegram.more_tasks', { count: tasks.length - 10 })}`;
   }
 
   await sendMessage(text);
@@ -277,18 +281,19 @@ async function handleFailed() {
   const tasks = await getFailedTasks();
 
   if (tasks.length === 0) {
-    await sendMessage('❌ 실패한 작업이 없습니다.');
+    await sendMessage(`❌ ${t('telegram.no_failed_tasks')}`);
     return;
   }
 
-  let text = '❌ <b>실패한 작업</b>\n\n';
+  const lang = getCurrentLanguage();
+  let text = `❌ <b>${t('telegram.failed_tasks_title')}</b>\n\n`;
   for (const task of tasks.slice(-10)) {
-    const date = new Date(task.failedAt).toLocaleDateString('ko-KR');
-    text += `• ${task.requirement.slice(0, 40)}...\n  └ ${date}: ${task.summary.slice(0, 50)}...\n\n`;
+    const date = new Date(task.failedAt).toLocaleDateString(lang === 'ko' ? 'ko-KR' : lang);
+    text += `${t('telegram.failed_task_item', { requirement: task.requirement.slice(0, 40), date, summary: task.summary.slice(0, 50) })}\n\n`;
   }
 
   if (tasks.length > 10) {
-    text += `\n... 외 ${tasks.length - 10}개`;
+    text += `\n${t('telegram.more_tasks', { count: tasks.length - 10 })}`;
   }
 
   await sendMessage(text);
@@ -302,25 +307,24 @@ async function handleStatus() {
   const tasks = await getAllPendingTasks();
   const inProgressTasks = tasks.filter(t => t.status === 'inProgress');
 
-  let text = '📊 <b>현재 상태</b>\n\n';
+  let text = `📊 <b>${t('telegram.current_status_title')}</b>\n\n`;
 
   if (inProgressTasks.length > 0) {
-    text += `🔄 진행중: ${inProgressTasks.length}개\n`;
+    text += `🔄 ${t('telegram.in_progress_count', { count: inProgressTasks.length })}\n`;
     for (const task of inProgressTasks) {
       const shortId = task.id.slice(-8);
-      text += `  • [${shortId}] ${task.requirement.slice(0, 40)}...\n`;
-      text += `    시도: ${task.currentRetry + 1}/${task.maxRetries}\n`;
+      text += `  ${t('telegram.task_progress', { id: shortId, requirement: task.requirement.slice(0, 40), current: task.currentRetry + 1, max: task.maxRetries })}\n`;
     }
     text += '\n';
   } else {
-    text += '현재 진행중인 작업 없음\n\n';
+    text += `${t('telegram.no_in_progress')}\n\n`;
   }
 
-  text += `⏳ 대기중: ${tasks.filter(t => t.status === 'ready').length}개\n`;
+  text += `⏳ ${t('telegram.waiting_count', { count: tasks.filter(t => t.status === 'ready').length })}\n`;
 
   // 실행 중인 작업들의 최근 출력 표시
   if (inProgressTasks.length > 0 && lastClaudeOutputs.size > 0) {
-    text += '\n<b>최근 출력:</b>\n';
+    text += `\n<b>${t('telegram.recent_output')}</b>\n`;
     for (const task of inProgressTasks) {
       const outputs = lastClaudeOutputs.get(task.id);
       if (outputs && outputs.length > 0) {
@@ -341,14 +345,12 @@ async function handleStatus() {
 /* istanbul ignore next */
 async function handleReset() {
   await sendMessage(
-    '⚠️ <b>데이터 초기화</b>\n\n' +
-    '모든 작업 대기/완료/실패 내역과 로그가 모두 사라집니다.\n' +
-    '계속 진행하시겠습니까?',
+    `⚠️ <b>${t('telegram.reset_title')}</b>\n\n${t('telegram.reset_warning')}`,
     {
       reply_markup: {
         inline_keyboard: [[
-          { text: '예', callback_data: 'reset_yes' },
-          { text: '아니오', callback_data: 'reset_no' }
+          { text: t('telegram.yes'), callback_data: 'reset_yes' },
+          { text: t('telegram.no'), callback_data: 'reset_no' }
         ]]
       }
     }
@@ -366,13 +368,13 @@ async function handleDebug() {
 
   const memUsage = process.memoryUsage();
 
-  let text = '🔧 <b>시스템 상태</b>\n\n';
-  text += `📋 대기중: ${tasks.filter(t => t.status === 'ready').length}개\n`;
-  text += `🔄 진행중: ${tasks.filter(t => t.status === 'inProgress').length}개\n`;
-  text += `✅ 완료: ${completed.length}개\n`;
-  text += `❌ 실패: ${failed.length}개\n\n`;
-  text += `💾 메모리: ${Math.round(memUsage.heapUsed / 1024 / 1024)}MB\n`;
-  text += `⏰ 가동시간: ${Math.round(process.uptime() / 60)}분\n`;
+  let text = `🔧 <b>${t('telegram.system_status_title')}</b>\n\n`;
+  text += `📋 ${t('telegram.waiting_count', { count: tasks.filter(t => t.status === 'ready').length })}\n`;
+  text += `🔄 ${t('telegram.in_progress_count', { count: tasks.filter(t => t.status === 'inProgress').length })}\n`;
+  text += `✅ ${t('telegram.completed_tasks_title')}: ${completed.length}\n`;
+  text += `❌ ${t('telegram.failed_tasks_title')}: ${failed.length}\n\n`;
+  text += `💾 ${t('telegram.memory_usage', { usage: Math.round(memUsage.heapUsed / 1024 / 1024) })}\n`;
+  text += `⏰ ${t('telegram.uptime', { minutes: Math.round(process.uptime() / 60) })}\n`;
 
   await sendMessage(text);
 }
@@ -396,7 +398,7 @@ async function handleNewTaskFlow(chatId, text) {
     state.requirement = text;
     state.step = 'criteria';
     userStates.set(chatId, state);
-    await sendMessage('2단계: 완료 기준을 입력하세요.\n\n(예: "테스트가 모두 통과하고 빌드 성공")');
+    await sendMessage(t('telegram.step2_criteria'));
     return true;
   }
 
@@ -405,16 +407,16 @@ async function handleNewTaskFlow(chatId, text) {
     state.step = 'priority';
     userStates.set(chatId, state);
 
-    await sendMessage('3단계: 우선순위를 선택하세요.', {
+    await sendMessage(t('telegram.step3_priority'), {
       reply_markup: {
         inline_keyboard: [
           [
-            { text: '🔵 낮음', callback_data: 'priority_1' },
-            { text: '🟢 보통', callback_data: 'priority_2' }
+            { text: `🔵 ${t('telegram.priority_low')}`, callback_data: 'priority_1' },
+            { text: `🟢 ${t('telegram.priority_normal')}`, callback_data: 'priority_2' }
           ],
           [
-            { text: '🟠 높음', callback_data: 'priority_3' },
-            { text: '🔴 긴급', callback_data: 'priority_4' }
+            { text: `🟠 ${t('telegram.priority_high')}`, callback_data: 'priority_3' },
+            { text: `🔴 ${t('telegram.priority_urgent')}`, callback_data: 'priority_4' }
           ]
         ]
       }
@@ -425,7 +427,7 @@ async function handleNewTaskFlow(chatId, text) {
   if (state.step === 'retries_custom') {
     const retries = parseInt(text, 10);
     if (isNaN(retries) || retries < 1 || retries > 100) {
-      await sendMessage('1~100 사이의 숫자를 입력하세요.');
+      await sendMessage(t('telegram.invalid_retries'));
       return true;
     }
 
@@ -452,12 +454,12 @@ async function finishSimpleTaskCreation(chatId, state) {
   userStates.delete(chatId);
 
   await sendMessage(
-    `✅ <b>작업이 등록되었습니다!</b>\n\n` +
-    `📝 요구사항: ${state.requirement.slice(0, 100)}...\n` +
-    `⚡ 유형: 단순 (1회 실행)`
+    `✅ <b>${t('telegram.task_registered')}</b>\n\n` +
+    `📝 ${t('telegram.requirement_label', { text: state.requirement.slice(0, 100) })}...\n` +
+    `⚡ ${t('telegram.type_simple')}`
   );
 
-  info('새 단순 작업 생성', { taskId: task.id });
+  info('New simple task created', { taskId: task.id });
 }
 
 /**
@@ -475,17 +477,18 @@ async function finishTaskCreation(chatId, state, retries) {
 
   userStates.delete(chatId);
 
-  const priorityLabel = PRIORITY_LABELS[task.priority] || PRIORITY_LABELS[PRIORITY.NORMAL];
+  const priorityLabels = getPriorityLabels();
+  const priorityLabel = priorityLabels[task.priority] || priorityLabels[PRIORITY.NORMAL];
 
   await sendMessage(
-    `✅ <b>작업이 등록되었습니다!</b>\n\n` +
-    `📝 요구사항: ${state.requirement.slice(0, 100)}...\n` +
-    `🎯 완료기준: ${state.criteria.slice(0, 100)}...\n` +
-    `⚡ 우선순위: ${priorityLabel}\n` +
-    `🔄 반복횟수: ${retries}회`
+    `✅ <b>${t('telegram.task_registered')}</b>\n\n` +
+    `📝 ${t('telegram.requirement_label', { text: state.requirement.slice(0, 100) })}...\n` +
+    `🎯 ${t('telegram.criteria_label', { text: state.criteria.slice(0, 100) })}...\n` +
+    `⚡ ${t('telegram.priority_label', { priority: priorityLabel })}\n` +
+    `🔄 ${t('telegram.retries_label', { count: retries })}`
   );
 
-  info('새 작업 생성', { taskId: task.id, priority: task.priority });
+  info('New task created', { taskId: task.id, priority: task.priority });
 }
 
 /**
@@ -505,7 +508,7 @@ async function handleCallbackQuery(query) {
   try {
     await callApi('answerCallbackQuery', { callback_query_id: query.id });
   } catch (err) {
-    error('answerCallbackQuery 실패', err.message);
+    error('answerCallbackQuery failed', err.message);
   }
 
   // 복잡도 선택 - 단순
@@ -515,9 +518,9 @@ async function handleCallbackQuery(query) {
       state.step = 'simple_requirement';
       state.isSimple = true;
       userStates.set(chatId, state);
-      await sendMessage('요구사항을 입력하세요.');
+      await sendMessage(t('telegram.step_requirement'));
     } else {
-      await sendMessage('⚠️ 작업 생성 세션이 만료되었습니다. /new로 다시 시작해주세요.');
+      await sendMessage(`⚠️ ${t('telegram.session_expired')}`);
     }
     return;
   }
@@ -529,9 +532,9 @@ async function handleCallbackQuery(query) {
       state.step = 'requirement';
       state.isSimple = false;
       userStates.set(chatId, state);
-      await sendMessage('1단계: 요구사항을 입력하세요.');
+      await sendMessage(t('telegram.step1_requirement'));
     } else {
-      await sendMessage('⚠️ 작업 생성 세션이 만료되었습니다. /new로 다시 시작해주세요.');
+      await sendMessage(`⚠️ ${t('telegram.session_expired')}`);
     }
     return;
   }
@@ -546,18 +549,18 @@ async function handleCallbackQuery(query) {
       userStates.set(chatId, state);
 
       const defaultRetries = config?.defaultMaxRetries || 15;
-      await sendMessage('4단계: 반복 횟수를 선택하세요.', {
+      await sendMessage(t('telegram.step4_retries'), {
         reply_markup: {
           inline_keyboard: [
             [
-              { text: `${defaultRetries}회 실행 (기본값)`, callback_data: 'retry_default' },
-              { text: '직접 입력', callback_data: 'retry_custom' }
+              { text: `${defaultRetries}${t('telegram.retries_label', { count: '' }).replace('{count}', '')} (default)`, callback_data: 'retry_default' },
+              { text: t('telegram.retries_custom'), callback_data: 'retry_custom' }
             ]
           ]
         }
       });
     } else {
-      await sendMessage('⚠️ 작업 생성 세션이 만료되었습니다. /new로 다시 시작해주세요.');
+      await sendMessage(`⚠️ ${t('telegram.session_expired')}`);
     }
     return;
   }
@@ -569,7 +572,7 @@ async function handleCallbackQuery(query) {
       const defaultRetries = config?.defaultMaxRetries || 15;
       await finishTaskCreation(chatId, state, defaultRetries);
     } else {
-      await sendMessage('⚠️ 작업 생성 세션이 만료되었습니다. /new로 다시 시작해주세요.');
+      await sendMessage(`⚠️ ${t('telegram.session_expired')}`);
     }
     return;
   }
@@ -579,9 +582,9 @@ async function handleCallbackQuery(query) {
     if (state && state.step === 'retries') {
       state.step = 'retries_custom';
       userStates.set(chatId, state);
-      await sendMessage('반복 횟수를 입력하세요 (1~100):');
+      await sendMessage(t('telegram.enter_retries'));
     } else {
-      await sendMessage('⚠️ 작업 생성 세션이 만료되었습니다. /new로 다시 시작해주세요.');
+      await sendMessage(`⚠️ ${t('telegram.session_expired')}`);
     }
     return;
   }
@@ -591,22 +594,24 @@ async function handleCallbackQuery(query) {
     const taskId = data.replace('task_', '');
     try {
       const task = await loadTask(taskId);
-      const priorityLabel = PRIORITY_LABELS[task.priority] || PRIORITY_LABELS[PRIORITY.NORMAL];
+      const priorityLabels = getPriorityLabels();
+      const priorityLabel = priorityLabels[task.priority] || priorityLabels[PRIORITY.NORMAL];
+      const statusText = task.status === 'inProgress' ? `🔄 ${t('telegram.task_detail_status_inprogress')}` : `⏳ ${t('telegram.task_detail_status_waiting')}`;
       await sendMessage(
         `📝 <b>${task.requirement.slice(0, 50)}...</b>\n\n` +
-        `상태: ${task.status === 'inProgress' ? '🔄 진행중' : '⏳ 대기중'}\n` +
-        `우선순위: ${priorityLabel}\n` +
-        `시도: ${task.currentRetry}/${task.maxRetries}`,
+        `${t('telegram.status_label', { status: statusText })}\n` +
+        `${t('telegram.priority_label', { priority: priorityLabel })}\n` +
+        `${t('telegram.tries_label', { current: task.currentRetry, max: task.maxRetries })}`,
         {
           reply_markup: {
             inline_keyboard: [[
-              { text: '🗑️ 작업 취소', callback_data: `cancel_${taskId}` }
+              { text: `🗑️ ${t('telegram.cancel_task_btn')}`, callback_data: `cancel_${taskId}` }
             ]]
           }
         }
       );
     } catch {
-      await sendMessage('작업을 찾을 수 없습니다.');
+      await sendMessage(t('telegram.task_not_found'));
     }
     return;
   }
@@ -616,10 +621,10 @@ async function handleCallbackQuery(query) {
     const taskId = data.replace('cancel_', '');
     try {
       await cancelTask(taskId);
-      await sendMessage('✅ 작업이 취소되었습니다.');
-      info('작업 취소', { taskId });
+      await sendMessage(`✅ ${t('telegram.task_cancel_success')}`);
+      info('Task cancelled', { taskId });
     } catch {
-      await sendMessage('작업 취소에 실패했습니다.');
+      await sendMessage(t('telegram.task_cancel_failed'));
     }
     return;
   }
@@ -628,18 +633,18 @@ async function handleCallbackQuery(query) {
   if (data === 'reset_yes') {
     try {
       await resetAllData();
-      await sendMessage('✅ 모든 데이터가 초기화되었습니다.');
-      info('데이터 초기화 완료');
+      await sendMessage(`✅ ${t('telegram.reset_success')}`);
+      info('Data reset complete');
     } catch (err) {
-      await sendMessage('❌ 초기화 중 오류가 발생했습니다.');
-      error('데이터 초기화 실패', err.message);
+      await sendMessage(`❌ ${t('telegram.reset_failed')}`);
+      error('Data reset failed', err.message);
     }
     return;
   }
 
   // 데이터 초기화 - 아니오
   if (data === 'reset_no') {
-    await sendMessage('취소되었습니다.');
+    await sendMessage(t('telegram.reset_cancelled'));
     return;
   }
 }
@@ -656,7 +661,7 @@ async function handleMessage(message) {
 
   // chatId 검증
   if (chatId !== config.chatId) {
-    debug('허용되지 않은 chatId', { chatId });
+    debug('Unauthorized chatId', { chatId });
     return;
   }
 
@@ -693,7 +698,7 @@ async function handleMessage(message) {
         await handleReset();
         break;
       default:
-        await sendMessage('알 수 없는 명령어입니다. /start로 시작하세요.');
+        await sendMessage(t('telegram.unknown_command'));
     }
     return;
   }
@@ -701,7 +706,7 @@ async function handleMessage(message) {
   // 작업 생성 플로우 처리
   const handled = await handleNewTaskFlow(chatId, text);
   if (!handled) {
-    await sendMessage('명령어를 입력하세요. /new로 새 작업을 생성할 수 있습니다.');
+    await sendMessage(t('telegram.enter_command'));
   }
 }
 
@@ -719,7 +724,7 @@ async function processUpdate(update) {
       await handleMessage(update.message);
     }
   } catch (err) {
-    error('업데이트 처리 오류', err.message);
+    error('Update processing error', err.message);
   }
 }
 
@@ -735,7 +740,7 @@ async function pollLoop() {
         await processUpdate(update);
       }
     } catch (err) {
-      error('폴링 오류', err.message);
+      error('Polling error', err.message);
     }
 
     // 짧은 대기
@@ -753,20 +758,16 @@ export async function startBot() {
   isRunning = true;
 
   await setMyCommands();
-  info('텔레그램 봇 시작');
+  info('Telegram bot started');
 
   const hostname = os.hostname();
   const workingDir = process.cwd();
-  await sendMessage(
-    `🤖 cc-telegram 봇이 시작되었습니다.\n\n` +
-    `💻 PC: ${hostname}\n` +
-    `📁 경로: <code>${workingDir}</code>`
-  );
+  await sendMessage(`🤖 ${t('telegram.bot_started', { hostname, workingDir })}`);
 
   // 백그라운드 폴링 시작
   /* istanbul ignore next */
   pollLoop().catch(err => {
-    error('폴링 루프 오류', err.message);
+    error('Polling loop error', err.message);
   });
 }
 
@@ -775,7 +776,7 @@ export async function startBot() {
  */
 export function stopBot() {
   isRunning = false;
-  info('텔레그램 봇 중지');
+  info('Telegram bot stopped');
 }
 
 /**

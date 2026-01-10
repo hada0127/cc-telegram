@@ -1,5 +1,10 @@
 # cc-telegram
 
+🌍 **Language / 언어 / 语言**:
+[English](README.md) | [한국어](README.ko.md) | [中文](README.zh.md) | [Español](README.es.md) | [हिन्दी](README.hi.md) | [العربية](README.ar.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [日本語](README.ja.md) | [Français](README.fr.md) | [Deutsch](README.de.md)
+
+---
+
 Remote Claude Code execution via Telegram bot.
 
 Control Claude Code from anywhere using your Telegram app. Create tasks, monitor progress, and receive completion notifications - all from your phone.
