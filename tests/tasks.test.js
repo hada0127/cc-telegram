@@ -178,6 +178,102 @@ describe('getNextTask', () => {
   });
 });
 
+describe('getNextTasks (병렬 실행)', () => {
+  beforeEach(async () => {
+    await tasksModule.resetAllData();
+  });
+
+  test('대기 작업이 없으면 빈 배열을 반환해야 함', async () => {
+    const tasks = await tasksModule.getNextTasks(3);
+    expect(tasks).toEqual([]);
+  });
+
+  test('요청한 개수만큼 작업을 반환해야 함', async () => {
+    // 3개 작업 생성
+    for (let i = 0; i < 3; i++) {
+      await tasksModule.createTask({
+        requirement: `작업 ${i + 1}`,
+        completionCriteria: '완료',
+        maxRetries: 1,
+        workingDirectory: testDir
+      });
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+
+    const tasks = await tasksModule.getNextTasks(2);
+    expect(tasks).toHaveLength(2);
+  });
+
+  test('요청한 개수보다 작업이 적으면 있는 만큼만 반환해야 함', async () => {
+    await tasksModule.createTask({
+      requirement: '유일한 작업',
+      completionCriteria: '완료',
+      maxRetries: 1,
+      workingDirectory: testDir
+    });
+
+    const tasks = await tasksModule.getNextTasks(5);
+    expect(tasks).toHaveLength(1);
+  });
+
+  test('우선순위 순서대로 작업을 반환해야 함', async () => {
+    // 낮은 우선순위 먼저
+    const lowTask = await tasksModule.createTask({
+      requirement: '낮은 우선순위',
+      completionCriteria: '완료',
+      maxRetries: 1,
+      workingDirectory: testDir,
+      priority: tasksModule.PRIORITY.LOW
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 10));
+
+    // 높은 우선순위
+    const highTask = await tasksModule.createTask({
+      requirement: '높은 우선순위',
+      completionCriteria: '완료',
+      maxRetries: 1,
+      workingDirectory: testDir,
+      priority: tasksModule.PRIORITY.HIGH
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 10));
+
+    // 일반 우선순위
+    const normalTask = await tasksModule.createTask({
+      requirement: '일반 우선순위',
+      completionCriteria: '완료',
+      maxRetries: 1,
+      workingDirectory: testDir,
+      priority: tasksModule.PRIORITY.NORMAL
+    });
+
+    const tasks = await tasksModule.getNextTasks(3);
+    expect(tasks[0].id).toBe(highTask.id);
+    expect(tasks[1].id).toBe(normalTask.id);
+    expect(tasks[2].id).toBe(lowTask.id);
+  });
+
+  test('기본값은 1개 작업을 반환해야 함', async () => {
+    await tasksModule.createTask({
+      requirement: '작업 1',
+      completionCriteria: '완료',
+      maxRetries: 1,
+      workingDirectory: testDir
+    });
+
+    await tasksModule.createTask({
+      requirement: '작업 2',
+      completionCriteria: '완료',
+      maxRetries: 1,
+      workingDirectory: testDir
+    });
+
+    const tasks = await tasksModule.getNextTasks();
+    expect(tasks).toHaveLength(1);
+  });
+});
+
 describe('startTask', () => {
   beforeEach(async () => {
     await tasksModule.resetAllData();
