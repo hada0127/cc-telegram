@@ -14,6 +14,7 @@ import { initLogger, info, error } from './utils/logger.js';
 import { runCleanup } from './utils/logRotation.js';
 import { t } from './i18n.js';
 import path from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 /**
  * 종료 핸들러
@@ -96,8 +97,8 @@ export async function main() {
 
 /* istanbul ignore next */
 // 직접 실행시에만 main 호출
-const fileUrl = `file:///${process.argv[1].replace(/\\/g, '/')}`;
-const isMainModule = import.meta.url === fileUrl;
+const isMainModule = process.argv[1] &&
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 /* istanbul ignore if */
 if (isMainModule) {
   main().catch(err => {
