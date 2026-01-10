@@ -52,7 +52,7 @@ export async function configExists() {
 
 /**
  * 설정 로드
- * @returns {Promise<{botToken: string, chatId: string, debugMode: boolean, claudeCommand: string|null, logRetentionDays: number}>}
+ * @returns {Promise<{botToken: string, chatId: string, debugMode: boolean, claudeCommand: string|null, logRetentionDays: number, defaultMaxRetries: number}>}
  */
 export async function loadConfig() {
   if (cachedConfig) return cachedConfig;
@@ -66,7 +66,8 @@ export async function loadConfig() {
     chatId: decrypt(config.chatId),
     debugMode: config.debugMode || false,
     claudeCommand: config.claudeCommand || null, // null이면 자동 감지
-    logRetentionDays: config.logRetentionDays || 7
+    logRetentionDays: config.logRetentionDays || 7,
+    defaultMaxRetries: config.defaultMaxRetries || 15
   };
 
   return cachedConfig;
@@ -80,19 +81,21 @@ export async function loadConfig() {
  * @param {boolean} [config.debugMode]
  * @param {string|null} [config.claudeCommand]
  * @param {number} [config.logRetentionDays]
+ * @param {number} [config.defaultMaxRetries]
  */
-export async function saveConfig({ botToken, chatId, debugMode = false, claudeCommand = null, logRetentionDays = 7 }) {
+export async function saveConfig({ botToken, chatId, debugMode = false, claudeCommand = null, logRetentionDays = 7, defaultMaxRetries = 15 }) {
   const configPath = getConfigPath();
   const encryptedConfig = {
     botToken: encrypt(botToken),
     chatId: encrypt(chatId),
     debugMode,
     claudeCommand,
-    logRetentionDays
+    logRetentionDays,
+    defaultMaxRetries
   };
 
   await fs.writeFile(configPath, JSON.stringify(encryptedConfig, null, 2));
-  cachedConfig = { botToken, chatId, debugMode, claudeCommand, logRetentionDays };
+  cachedConfig = { botToken, chatId, debugMode, claudeCommand, logRetentionDays, defaultMaxRetries };
 }
 
 /**

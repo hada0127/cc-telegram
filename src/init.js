@@ -224,10 +224,15 @@ export async function initialize(cwd) {
     throw new Error('chatId가 일치하지 않습니다. 다시 시도해주세요.');
   }
 
-  // 8. 설정 저장
-  await saveConfig({ botToken, chatId: detectedChatId, debugMode: false });
+  // 8. 기본 반복횟수 입력
+  console.log('\n⚙️ 기본 설정\n');
+  const maxRetriesInput = await prompt('기본 반복횟수를 입력하세요 (15 권장): ');
+  const defaultMaxRetries = parseInt(maxRetriesInput, 10) || 15;
 
-  // 9. 봇 명령어 등록 (자동완성용)
+  // 9. 설정 저장
+  await saveConfig({ botToken, chatId: detectedChatId, debugMode: false, defaultMaxRetries });
+
+  // 10. 봇 명령어 등록 (자동완성용)
   console.log('📝 봇 명령어 등록 중...');
   const commands = [
     { command: 'start', description: 'chatId 확인' },
