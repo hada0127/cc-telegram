@@ -38,7 +38,25 @@ let currentLanguage = null;
  * @returns {string} 언어 코드 (예: 'ko', 'en', 'zh')
  */
 export function detectSystemLanguage() {
-  // 환경 변수에서 언어 설정 확인
+  // Windows에서는 시스템 로케일을 우선 사용 (환경 변수가 실제 시스템 언어와 다를 수 있음)
+  if (process.platform === 'win32') {
+    try {
+      const { execSync } = require('child_process');
+      const result = execSync('powershell -NoProfile -Command "[System.Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName"', {
+        encoding: 'utf8',
+        timeout: 5000,
+        windowsHide: true
+      }).trim().toLowerCase();
+
+      if (SUPPORTED_LANGUAGES.includes(result)) {
+        return result;
+      }
+    } catch {
+      // PowerShell 실패 시 환경 변수로 폴백
+    }
+  }
+
+  // 환경 변수에서 언어 설정 확인 (Unix 계열 및 Windows 폴백)
   const envLang = process.env.LANG || process.env.LANGUAGE || process.env.LC_ALL || process.env.LC_MESSAGES;
 
   if (envLang) {
@@ -46,24 +64,6 @@ export function detectSystemLanguage() {
     const langCode = envLang.split('_')[0].split('.')[0].toLowerCase();
     if (SUPPORTED_LANGUAGES.includes(langCode)) {
       return langCode;
-    }
-  }
-
-  // Windows에서 시스템 언어 감지
-  if (process.platform === 'win32') {
-    try {
-      // Windows의 경우 LCID나 시스템 로케일로 감지
-      const { execSync } = require('child_process');
-      const result = execSync('powershell -command "[System.Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName"', {
-        encoding: 'utf8',
-        timeout: 5000
-      }).trim().toLowerCase();
-
-      if (SUPPORTED_LANGUAGES.includes(result)) {
-        return result;
-      }
-    } catch {
-      // 실패 시 기본 언어 사용
     }
   }
 
