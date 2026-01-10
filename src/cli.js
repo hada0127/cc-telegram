@@ -13,6 +13,7 @@ import { startExecutor, stopExecutor } from './executor.js';
 import { initLogger, info, error } from './utils/logger.js';
 import { runCleanup } from './utils/logRotation.js';
 import { t } from './i18n.js';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
@@ -96,13 +97,32 @@ export async function main() {
 }
 
 /* istanbul ignore next */
-// 직접 실행시에만 main 호출
-const isMainModule = process.argv[1] &&
-  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+// 직접 실행시에만 main 호출 (symlink 대응)
+const isMainModule = (() => {
+  if (!process.argv[1]) return false;
+  try {
+    const currentFile = fileURLToPath(import.meta.url);
+    const argvFile = path.resolve(process.argv[1]);
+
+    // 실제 경로로 비교 (symlink 해결)
+    const currentReal = fs.existsSync(currentFile) ? fs.realpathSync(currentFile) : currentFile;
+    const argvReal = fs.existsSync(argvFile) ? fs.realpathSync(argvFile) : argvFile;
+
+    return currentReal === argvReal;
+  } catch {
+    // realpathSync 실패 시 기존 방식으로 폴백
+    return fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+  }
+})();
 /* istanbul ignore if */
 if (isMainModule) {
   main().catch(err => {
-    console.error(`❌ ${t('app.error')}:`, err.message);
+    // t() 함수도 실패할 수 있으므로 안전하게 처리
+    try {
+      console.error(`❌ ${t('app.error')}:`, err.message);
+    } catch {
+      console.error('❌ Error:', err.message);
+    }
     process.exit(1);
   });
 }

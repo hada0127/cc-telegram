@@ -161,4 +161,19 @@ export function setLanguage(lang) {
 }
 
 // 모듈 로드 시 자동으로 번역 데이터 초기화
-loadTranslations();
+try {
+  loadTranslations();
+} catch (err) {
+  // 번역 로드 실패 시 기본 영어 메시지로 폴백
+  translations = {
+    app: {
+      name: 'cc-telegram',
+      description: 'Remote Claude Code execution via Telegram',
+      error: 'Error',
+      start_failed: 'Failed to start',
+      shutting_down: 'Shutting down...'
+    }
+  };
+  currentLanguage = 'en';
+  console.error('Warning: Failed to load translations, using fallback:', err.message);
+}
