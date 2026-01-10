@@ -151,6 +151,9 @@
     "task_done": "任务完成。{output}",
     "task_fail_summary": "任务失败。\n失败原因：{reason}\n{output}"
   },
+  "tasks": {
+    "cancelled_by_user": "被用户取消"
+  },
   "prompt": {
     "title": "任务请求",
     "requirement": "需求",

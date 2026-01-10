@@ -151,6 +151,9 @@
     "task_done": "اكتملت المهمة. {output}",
     "task_fail_summary": "فشلت المهمة.\nسبب الفشل: {reason}\n{output}"
   },
+  "tasks": {
+    "cancelled_by_user": "ألغاه المستخدم"
+  },
   "prompt": {
     "title": "طلب المهمة",
     "requirement": "المتطلب",

@@ -378,7 +378,7 @@ describe('callTelegramApi 직접 테스트', () => {
     });
 
     await expect(initModule.callTelegramApi('invalid-token', 'getMe'))
-      .rejects.toThrow('Telegram API 오류: Invalid token');
+      .rejects.toThrow('Telegram API error: Invalid token');
   });
 });
 
@@ -412,7 +412,7 @@ describe('validateBotToken 직접 테스트', () => {
 
     const result = await initModule.validateBotToken('invalid-token');
     expect(result.valid).toBe(false);
-    expect(result.error).toContain('Telegram API 오류');
+    expect(result.error).toContain('Telegram API error');
   });
 });
 

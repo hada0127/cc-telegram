@@ -14,6 +14,7 @@ let dataDir;
 // 모듈 동적 import (테스트 환경 설정 후)
 let tasksModule;
 let configModule;
+let i18nModule;
 
 beforeAll(async () => {
   // 임시 디렉토리 생성
@@ -44,6 +45,9 @@ beforeAll(async () => {
   // config 모듈 import 및 cwd 설정
   configModule = await import('../src/config.js');
   configModule.setCwd(testDir);
+
+  // i18n 모듈 import
+  i18nModule = await import('../src/i18n.js');
 
   // tasks 모듈 import
   tasksModule = await import('../src/tasks.js');
@@ -300,7 +304,7 @@ describe('cancelTask', () => {
     const failedTasks = await tasksModule.getFailedTasks();
     const cancelledTask = failedTasks.find(t => t.id === task.id);
     expect(cancelledTask).toBeDefined();
-    expect(cancelledTask.summary).toBe('사용자에 의해 취소됨');
+    expect(cancelledTask.summary).toBe(i18nModule.t('tasks.cancelled_by_user'));
   });
 });
 

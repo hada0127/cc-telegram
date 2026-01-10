@@ -151,6 +151,9 @@
     "task_done": "Tarefa concluída. {output}",
     "task_fail_summary": "Tarefa falhou.\nMotivo da falha: {reason}\n{output}"
   },
+  "tasks": {
+    "cancelled_by_user": "Cancelado pelo usuário"
+  },
   "prompt": {
     "title": "Solicitação de Tarefa",
     "requirement": "Requisito",

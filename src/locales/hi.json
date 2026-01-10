@@ -151,6 +151,9 @@
     "task_done": "कार्य पूर्ण। {output}",
     "task_fail_summary": "कार्य विफल।\nविफलता कारण: {reason}\n{output}"
   },
+  "tasks": {
+    "cancelled_by_user": "उपयोगकर्ता द्वारा रद्द"
+  },
   "prompt": {
     "title": "कार्य अनुरोध",
     "requirement": "आवश्यकता",

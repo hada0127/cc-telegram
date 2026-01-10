@@ -151,6 +151,9 @@
     "task_done": "작업 완료. {output}",
     "task_fail_summary": "작업 실패.\n실패 원인: {reason}\n{output}"
   },
+  "tasks": {
+    "cancelled_by_user": "사용자에 의해 취소됨"
+  },
   "prompt": {
     "title": "작업 요청",
     "requirement": "요구사항",

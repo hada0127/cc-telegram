@@ -151,6 +151,9 @@
     "task_done": "Tâche terminée. {output}",
     "task_fail_summary": "Tâche échouée.\nRaison de l'échec : {reason}\n{output}"
   },
+  "tasks": {
+    "cancelled_by_user": "Annulé par l'utilisateur"
+  },
   "prompt": {
     "title": "Demande de tâche",
     "requirement": "Exigence",

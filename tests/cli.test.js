@@ -17,6 +17,7 @@ let configModule;
 let tasksModule;
 let encryptionModule;
 let cliModule;
+let i18nModule;
 
 // console mock
 const originalConsole = {
@@ -65,6 +66,9 @@ beforeAll(async () => {
 
   // encryption 모듈 import
   encryptionModule = await import('../src/utils/encryption.js');
+
+  // i18n 모듈 import
+  i18nModule = await import('../src/i18n.js');
 
   // cli 모듈 import
   cliModule = await import('../src/cli.js');
@@ -268,7 +272,8 @@ describe('setupExitHandlers', () => {
     // cleanup은 async 함수이므로 호출하면 종료됨
     // process.exit가 mock되어 있으므로 실제 종료 안됨
     cleanup();
-    expect(console.log).toHaveBeenCalledWith('\n종료 중...');
+    // Use i18n to get the correct shutdown message
+    expect(console.log).toHaveBeenCalledWith(`\n${i18nModule.t('app.shutting_down')}`);
   });
 });
 

@@ -2,7 +2,7 @@
   "app": {
     "name": "cc-telegram",
     "description": "Ejecución remota de Claude Code a través de Telegram",
-    "shutting_down": "Cerrando...",
+    "shutting_down": "Deteniendo...",
     "start_failed": "Error al iniciar",
     "error": "Error"
   },
@@ -86,7 +86,7 @@
     "uptime": "Tiempo activo: {minutes} min",
     "step_requirement": "Ingresa tu requisito.",
     "step1_requirement": "Paso 1: Ingresa tu requisito.",
-    "step2_criteria": "Paso 2: Ingresa los criterios de completación.\n\n(ej., \"Todas las pruebas pasan y la compilación tiene éxito\")",
+    "step2_criteria": "Paso 2: Ingresa los criterios de finalización.\n\n(ej., \"Todas las pruebas pasan y la compilación tiene éxito\")",
     "step3_priority": "Paso 3: Selecciona la prioridad.",
     "step4_retries": "Paso 4: Selecciona el número de reintentos.",
     "retries_10": "10 reintentos",
@@ -151,16 +151,19 @@
     "task_done": "Tarea completada. {output}",
     "task_fail_summary": "Tarea fallida.\nRazón del fallo: {reason}\n{output}"
   },
+  "tasks": {
+    "cancelled_by_user": "Cancelado por el usuario"
+  },
   "prompt": {
     "title": "Solicitud de Tarea",
     "requirement": "Requisito",
-    "completion_criteria": "Criterios de Completación",
+    "completion_criteria": "Criterios de Finalización",
     "none": "Ninguno",
     "instructions_title": "Instrucciones",
-    "instruction1": "Completa el requisito y cumple con los criterios de completación.",
-    "instruction2": "Verifica que los criterios de completación se cumplan al finalizar.",
-    "instruction3": "Explica por qué si los criterios de completación no pueden cumplirse.",
-    "signal_title": "Señal de Completación (¡Importante!)",
+    "instruction1": "Completa el requisito y cumple con los criterios de finalización.",
+    "instruction2": "Verifica que los criterios de finalización se cumplan al terminar.",
+    "instruction3": "Si no se pueden cumplir los criterios de finalización, explica el motivo.",
+    "signal_title": "Señal de Finalización (¡Importante!)",
     "signal_complete": "Si todo el trabajo está completo y los criterios se cumplen, emite esta señal:",
     "signal_failed": "Si el trabajo no puede completarse o los criterios no se cumplen, emite esta señal con la razón:",
     "failure_reason": "Razón del fallo: [razón específica]"

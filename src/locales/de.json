@@ -151,6 +151,9 @@
     "task_done": "Aufgabe abgeschlossen. {output}",
     "task_fail_summary": "Aufgabe fehlgeschlagen.\nFehlergrund: {reason}\n{output}"
   },
+  "tasks": {
+    "cancelled_by_user": "Vom Benutzer abgebrochen"
+  },
   "prompt": {
     "title": "Aufgabenanfrage",
     "requirement": "Anforderung",

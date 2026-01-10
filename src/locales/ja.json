@@ -151,6 +151,9 @@
     "task_done": "タスク完了。{output}",
     "task_fail_summary": "タスク失敗。\n失敗理由: {reason}\n{output}"
   },
+  "tasks": {
+    "cancelled_by_user": "ユーザーによりキャンセル"
+  },
   "prompt": {
     "title": "タスクリクエスト",
     "requirement": "要件",

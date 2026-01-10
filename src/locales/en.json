@@ -151,6 +151,9 @@
     "task_done": "Task complete. {output}",
     "task_fail_summary": "Task failed.\nFailure reason: {reason}\n{output}"
   },
+  "tasks": {
+    "cancelled_by_user": "Cancelled by user"
+  },
   "prompt": {
     "title": "Task Request",
     "requirement": "Requirement",

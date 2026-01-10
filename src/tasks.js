@@ -8,6 +8,7 @@ import path from 'path';
 import { getDataDir } from './config.js';
 import { warn, error as logError } from './utils/logger.js';
 import { atomicWriteJson } from './utils/atomicFile.js';
+import { t } from './i18n.js';
 
 /**
  * 날짜 기반 ID 생성
@@ -364,7 +365,7 @@ async function removeFromTasks(taskId) {
  * @param {string} taskId
  */
 export async function cancelTask(taskId) {
-  await failTask(taskId, '사용자에 의해 취소됨');
+  await failTask(taskId, t('tasks.cancelled_by_user'));
 }
 
 /**
