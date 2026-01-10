@@ -47,7 +47,7 @@
     "orphan_tasks_cleaned": "{count} verwaiste Aufgabe(n) bereinigt",
     "old_logs_deleted": "{count} alte Log-Datei(en) gelöscht",
     "old_tasks_deleted": "Alte Aufgabendateien gelöscht: {completed} abgeschlossen, {failed} fehlgeschlagen",
-    "bot_running": "Bot läuft. Drücken Sie Ctrl+C zum Beenden.",
+    "bot_running": "Bot läuft. Drücken Sie Strg+C zum Beenden.",
     "started": "cc-telegram gestartet"
   },
   "telegram": {
