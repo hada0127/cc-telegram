@@ -13,8 +13,10 @@ import {
   cancelTask,
   loadTask,
   resetAllData,
-  PRIORITY
+  PRIORITY,
+  failTask
 } from './tasks.js';
+import { cancelRunningTask, isTaskRunning } from './executor.js';
 import { info, error, debug } from './utils/logger.js';
 import { t, getCurrentLanguage } from './i18n.js';
 
@@ -336,7 +338,18 @@ async function handleStatus() {
     }
   }
 
-  await sendMessage(text);
+  // 실행 중인 작업별 취소 버튼 추가
+  if (inProgressTasks.length > 0) {
+    const keyboard = {
+      inline_keyboard: inProgressTasks.map(task => [{
+        text: `🛑 ${t('telegram.stop_running_task_btn', { id: task.id.slice(-8) })}`,
+        callback_data: `stop_${task.id}`
+      }])
+    };
+    await sendMessage(text, { reply_markup: keyboard });
+  } else {
+    await sendMessage(text);
+  }
 }
 
 /**
@@ -553,7 +566,7 @@ async function handleCallbackQuery(query) {
         reply_markup: {
           inline_keyboard: [
             [
-              { text: `${defaultRetries}${t('telegram.retries_label', { count: '' }).replace('{count}', '')} (default)`, callback_data: 'retry_default' },
+              { text: `${defaultRetries}${t('telegram.retries_unit')}`, callback_data: 'retry_default' },
               { text: t('telegram.retries_custom'), callback_data: 'retry_custom' }
             ]
           ]
@@ -616,7 +629,7 @@ async function handleCallbackQuery(query) {
     return;
   }
 
-  // 작업 취소
+  // 작업 취소 (대기 중인 작업)
   if (data.startsWith('cancel_')) {
     const taskId = data.replace('cancel_', '');
     try {
@@ -625,6 +638,30 @@ async function handleCallbackQuery(query) {
       info('Task cancelled', { taskId });
     } catch {
       await sendMessage(t('telegram.task_cancel_failed'));
+    }
+    return;
+  }
+
+  // 실행 중인 작업 중지
+  if (data.startsWith('stop_')) {
+    const taskId = data.replace('stop_', '');
+    try {
+      // 실행 중인 프로세스 종료
+      const stopped = cancelRunningTask(taskId);
+      if (stopped) {
+        // 작업을 실패로 처리
+        await failTask(taskId, t('tasks.cancelled_by_user'));
+        await sendMessage(`🛑 ${t('telegram.running_task_stopped')}`);
+        info('Running task stopped', { taskId });
+      } else {
+        // 프로세스가 없으면 일반 취소 시도
+        await cancelTask(taskId);
+        await sendMessage(`✅ ${t('telegram.task_cancel_success')}`);
+        info('Task cancelled (not running)', { taskId });
+      }
+    } catch (err) {
+      error('Failed to stop running task', { taskId, error: err.message });
+      await sendMessage(t('telegram.stop_running_task_failed'));
     }
     return;
   }

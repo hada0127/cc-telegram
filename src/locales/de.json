@@ -90,6 +90,7 @@
     "step3_priority": "Schritt 3: Wählen Sie die Priorität.",
     "step4_retries": "Schritt 4: Wählen Sie die Anzahl der Wiederholungen.",
     "retries_10": "10 Wiederholungen",
+    "retries_unit": " Wiederholungen",
     "retries_custom": "Benutzerdefiniert",
     "enter_retries": "Geben Sie die Anzahl der Wiederholungen ein (1~100):",
     "invalid_retries": "Bitte geben Sie eine Zahl zwischen 1 und 100 ein.",

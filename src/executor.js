@@ -3,7 +3,7 @@
  * Ralph Wiggum 방식 반복 실행 (순차/병렬 지원)
  */
 
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import {
   getNextTask,
   getNextTasks,
@@ -22,6 +22,9 @@ let cachedClaudeCommand = null;
 
 // 병렬 실행 시 현재 실행 중인 작업들
 const runningTasks = new Map();
+
+// 실행 중인 프로세스 저장 (취소용)
+const runningProcesses = new Map();
 
 /**
  * HTML 이스케이프 (Telegram HTML 파싱 오류 방지)
@@ -158,13 +161,18 @@ async function runClaude(prompt, cwd, taskId, isParallel = false) {
       reject(new Error(t('executor.timeout_error')));
     }, 30 * 60 * 1000);
 
+    // 프로세스 저장 (취소용)
+    runningProcesses.set(taskId, proc);
+
     proc.on('close', (exitCode) => {
       clearTimeout(timeout);
+      runningProcesses.delete(taskId);
       resolve({ exitCode: exitCode || 0, output });
     });
 
     proc.on('error', (err) => {
       clearTimeout(timeout);
+      runningProcesses.delete(taskId);
       reject(err);
     });
   });
@@ -571,6 +579,48 @@ export function getRunningTaskIds() {
 export function getCurrentTaskId() {
   const ids = getRunningTaskIds();
   return ids.length > 0 ? ids[0] : null;
+}
+
+/**
+ * 실행중인 작업 취소 (프로세스 종료)
+ * @param {string} taskId
+ * @returns {boolean} 성공 여부
+ */
+export function cancelRunningTask(taskId) {
+  const proc = runningProcesses.get(taskId);
+  if (proc) {
+    try {
+      // Windows에서는 taskkill 사용, 그 외는 SIGTERM
+      if (process.platform === 'win32') {
+        // Windows에서 프로세스 트리 전체 종료
+        try {
+          execSync(`taskkill /pid ${proc.pid} /T /F`, { windowsHide: true });
+        } catch {
+          // taskkill 실패 시 직접 kill 시도
+          proc.kill('SIGTERM');
+        }
+      } else {
+        proc.kill('SIGTERM');
+      }
+      runningProcesses.delete(taskId);
+      runningTasks.delete(taskId);
+      info('Task cancelled', { taskId });
+      return true;
+    } catch (err) {
+      error('Failed to cancel task', { taskId, error: err.message });
+      return false;
+    }
+  }
+  return false;
+}
+
+/**
+ * 실행 중인 작업인지 확인
+ * @param {string} taskId
+ * @returns {boolean}
+ */
+export function isTaskRunning(taskId) {
+  return runningProcesses.has(taskId);
 }
 
 // 테스트용 export

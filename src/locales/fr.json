@@ -90,6 +90,7 @@
     "step3_priority": "Étape 3 : Sélectionnez la priorité.",
     "step4_retries": "Étape 4 : Sélectionnez le nombre de tentatives.",
     "retries_10": "10 tentatives",
+    "retries_unit": " tentatives",
     "retries_custom": "Personnalisé",
     "enter_retries": "Entrez le nombre de tentatives (1~100) :",
     "invalid_retries": "Veuillez entrer un nombre entre 1 et 100.",

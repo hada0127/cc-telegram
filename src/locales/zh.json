@@ -90,6 +90,7 @@
     "step3_priority": "第3步：选择优先级。",
     "step4_retries": "第4步：选择重试次数。",
     "retries_10": "10次重试",
+    "retries_unit": "次",
     "retries_custom": "自定义",
     "enter_retries": "请输入重试次数（1~100）：",
     "invalid_retries": "请输入1到100之间的数字。",
