@@ -38,10 +38,11 @@ let currentLanguage = null;
  * @returns {string} 언어 코드 (예: 'ko', 'en', 'zh')
  */
 export function detectSystemLanguage() {
+  const { execSync } = require('child_process');
+
   // Windows에서는 시스템 로케일을 우선 사용 (환경 변수가 실제 시스템 언어와 다를 수 있음)
   if (process.platform === 'win32') {
     try {
-      const { execSync } = require('child_process');
       const result = execSync('powershell -NoProfile -Command "[System.Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName"', {
         encoding: 'utf8',
         timeout: 5000,
@@ -53,6 +54,24 @@ export function detectSystemLanguage() {
       }
     } catch {
       // PowerShell 실패 시 환경 변수로 폴백
+    }
+  }
+
+  // macOS에서는 defaults 명령어로 시스템 언어 감지
+  if (process.platform === 'darwin') {
+    try {
+      // AppleLocale에서 언어 코드 추출 (예: "ko_KR" -> "ko")
+      const locale = execSync('defaults read -g AppleLocale', {
+        encoding: 'utf8',
+        timeout: 5000
+      }).trim();
+
+      const langCode = locale.split('_')[0].toLowerCase();
+      if (SUPPORTED_LANGUAGES.includes(langCode)) {
+        return langCode;
+      }
+    } catch {
+      // defaults 실패 시 환경 변수로 폴백
     }
   }
 
