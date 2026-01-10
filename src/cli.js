@@ -95,7 +95,8 @@ export async function main() {
 
 /* istanbul ignore next */
 // 직접 실행시에만 main 호출
-const isMainModule = import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`;
+const fileUrl = `file:///${process.argv[1].replace(/\\/g, '/')}`;
+const isMainModule = import.meta.url === fileUrl;
 /* istanbul ignore if */
 if (isMainModule) {
   main().catch(err => {

@@ -99,7 +99,9 @@ async function runClaude(prompt, cwd) {
     proc.stdout.on('data', (data) => {
       const text = data.toString();
       output += text;
-      // 실시간 출력 업데이트
+      // CLI에 실시간 출력 표시
+      process.stdout.write(text);
+      // 텔레그램에도 실시간 출력 업데이트
       text.split('\n').forEach(line => {
         if (line.trim()) {
           updateClaudeOutput(line.trim());
@@ -108,7 +110,10 @@ async function runClaude(prompt, cwd) {
     });
 
     proc.stderr.on('data', (data) => {
-      output += data.toString();
+      const text = data.toString();
+      output += text;
+      // CLI에 stderr도 실시간 출력 표시
+      process.stderr.write(text);
     });
 
     // 프롬프트 전송
@@ -348,6 +353,12 @@ async function executionLoop() {
       currentTaskId = task.id;
       info('작업 시작', { taskId: task.id, requirement: task.requirement.slice(0, 50) });
 
+      // CLI에 작업 시작 표시
+      console.log('\n' + '='.repeat(60));
+      console.log(`[작업 시작] ${task.id}`);
+      console.log(`요구사항: ${task.requirement.slice(0, 100)}`);
+      console.log('='.repeat(60) + '\n');
+
       // 작업 시작
       await startTask(task.id);
       await sendMessage(`🚀 <b>작업 시작</b>\n\n${task.requirement.slice(0, 100)}...`);
@@ -360,6 +371,12 @@ async function executionLoop() {
         const summary = generateSummary(output, true);
         await completeTask(task.id, summary);
         const totalRetries = task.currentRetry + 1; // 현재 시도가 성공한 것이므로 +1
+
+        // CLI에 작업 완료 표시
+        console.log('\n' + '-'.repeat(60));
+        console.log(`[작업 완료] ${task.id} (${totalRetries}/${task.maxRetries}회)`);
+        console.log('-'.repeat(60) + '\n');
+
         await sendMessage(
           `✅ <b>작업 완료!</b>\n\n` +
           `📝 요구사항: ${task.requirement}\n\n` +
@@ -374,6 +391,13 @@ async function executionLoop() {
         if (canRetry) {
           // 재시도 - incrementRetry에서 이미 상태를 ready로 변경하고 저장함
           info('작업 재시도', { taskId: task.id, retry: updatedTask.currentRetry, reason });
+
+          // CLI에 재시도 표시
+          console.log('\n' + '-'.repeat(60));
+          console.log(`[재시도] ${task.id} (${updatedTask.currentRetry}/${task.maxRetries})`);
+          if (reason) console.log(`원인: ${reason.slice(0, 100)}`);
+          console.log('-'.repeat(60) + '\n');
+
           const reasonText = reason ? `\n원인: ${escapeHtml(reason.slice(0, 80))}` : '';
           await sendMessage(`🔄 <b>재시도 중...</b> (${updatedTask.currentRetry}/${task.maxRetries})${reasonText}`);
         } else {
@@ -381,6 +405,13 @@ async function executionLoop() {
           const summary = generateSummary(output, false, reason);
           await failTask(task.id, summary);
           const totalRetries = updatedTask.currentRetry; // 총 시도 횟수
+
+          // CLI에 작업 실패 표시
+          console.log('\n' + '-'.repeat(60));
+          console.log(`[작업 실패] ${task.id} (${totalRetries}/${task.maxRetries}회 시도)`);
+          if (reason) console.log(`원인: ${reason.slice(0, 100)}`);
+          console.log('-'.repeat(60) + '\n');
+
           await sendMessage(
             `❌ <b>작업 실패</b>\n\n` +
             `📝 요구사항: ${task.requirement}\n\n` +
