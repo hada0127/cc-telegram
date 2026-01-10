@@ -85,14 +85,18 @@ async function runClaude(prompt, cwd) {
       stdio: ['pipe', 'pipe', 'pipe']
     };
 
+    let proc;
     if (useShell) {
+      // shell: true일 때는 command와 args를 합쳐서 전달 (보안 경고 방지)
+      const fullCommand = [command, ...args].join(' ');
       spawnOptions.shell = true;
       if (process.platform === 'win32') {
         spawnOptions.windowsHide = true;
       }
+      proc = spawn(fullCommand, [], spawnOptions);
+    } else {
+      proc = spawn(command, args, spawnOptions);
     }
-
-    const proc = spawn(command, args, spawnOptions);
 
     let output = '';
 
