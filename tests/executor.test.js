@@ -755,7 +755,7 @@ describe('executionLoop 로직 시뮬레이션', () => {
     const updatedTask = { currentRetry: 2 };
     const task = { maxRetries: 3 };
     const reason = '일시적 오류';
-    const reasonText = reason ? `\n원인: ${executorModule.escapeHtml(reason.slice(0, 80))}` : '';
+    const reasonText = reason ? `\n원인: ${executorModule.escapeHtml(reason)}` : '';
 
     const message = `🔄 <b>재시도 중...</b> (${updatedTask.currentRetry}/${task.maxRetries})${reasonText}`;
 

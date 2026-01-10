@@ -402,7 +402,7 @@ async function executionLoop() {
           if (reason) console.log(`원인: ${reason.slice(0, 100)}`);
           console.log('-'.repeat(60) + '\n');
 
-          const reasonText = reason ? `\n원인: ${escapeHtml(reason.slice(0, 80))}` : '';
+          const reasonText = reason ? `\n원인: ${escapeHtml(reason)}` : '';
           await sendMessage(`🔄 <b>재시도 중...</b> (${updatedTask.currentRetry}/${task.maxRetries})${reasonText}`);
         } else {
           // 최종 실패
