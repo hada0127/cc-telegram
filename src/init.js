@@ -277,5 +277,5 @@ export async function initialize(cwd) {
   });
 
   console.log('\n✅ 초기화가 완료되었습니다!');
-  console.log('   이제 cc-telegram을 다시 실행하면 텔레그램 봇이 시작됩니다.\n');
+  console.log('   npx cc-telegram 을 실행하면 텔레그램 봇이 시작됩니다.\n');
 }
