@@ -648,6 +648,24 @@ describe('executor 모듈 함수 테스트', () => {
     await executorModule.startExecutor(); // 중복 호출
     executorModule.stopExecutor();
   });
+
+  test('cancelRunningTask가 함수여야 함', () => {
+    expect(typeof executorModule.cancelRunningTask).toBe('function');
+  });
+
+  test('isTaskRunning이 함수여야 함', () => {
+    expect(typeof executorModule.isTaskRunning).toBe('function');
+  });
+
+  test('실행 중이 아닌 작업에 cancelRunningTask 호출하면 false 반환', () => {
+    const result = executorModule.cancelRunningTask('non-existent-task-id');
+    expect(result).toBe(false);
+  });
+
+  test('실행 중이 아닌 작업에 isTaskRunning 호출하면 false 반환', () => {
+    const result = executorModule.isTaskRunning('non-existent-task-id');
+    expect(result).toBe(false);
+  });
 });
 
 describe('getClaudeCommand 로직', () => {

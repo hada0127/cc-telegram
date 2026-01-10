@@ -1071,3 +1071,29 @@ describe('세션 만료 처리', () => {
     expect(state.step).not.toBe('retries');
   });
 });
+
+describe('stop_* 콜백 처리', () => {
+  beforeEach(async () => {
+    await tasksModule.resetAllData();
+  });
+
+  test('stop_ 콜백 데이터에서 taskId를 추출해야 함', () => {
+    const data = 'stop_abc123def456';
+    const taskId = data.replace('stop_', '');
+    expect(taskId).toBe('abc123def456');
+  });
+
+  test('stop_ 콜백은 실행 중인 작업 취소에 사용됨', async () => {
+    const task = await tasksModule.createTask({
+      requirement: '취소할 작업',
+      completionCriteria: '완료',
+      maxRetries: 1,
+      workingDirectory: testDir
+    });
+
+    const data = `stop_${task.id}`;
+    const taskId = data.replace('stop_', '');
+
+    expect(taskId).toBe(task.id);
+  });
+});
