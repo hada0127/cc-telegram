@@ -86,7 +86,7 @@ The bot will start and listen for commands from your Telegram account.
 | `/list` | View pending and in-progress tasks |
 | `/completed` | View completed tasks |
 | `/failed` | View failed tasks |
-| `/status` | Check current execution status |
+| `/status` | Check current execution status and cancel running tasks |
 | `/debug` | View system information |
 | `/cancel` | Cancel task creation flow |
 | `/reset` | Reset all data (with confirmation) |
@@ -128,8 +128,17 @@ When enabled during setup, multiple tasks can run simultaneously:
 
 - Configure max concurrent tasks (1-10)
 - Each task shows its ID prefix in console output
-- `/status` shows all running tasks
+- `/status` shows all running tasks with stop buttons to cancel them
 - Higher priority tasks still get slots first
+
+### Canceling Running Tasks
+
+You can cancel tasks that are currently running:
+
+1. Send `/status` to view running tasks
+2. Each running task displays a "Stop" button
+3. Click the button to immediately terminate the task
+4. The canceled task will be marked as failed
 
 ### Console Output (Parallel Mode)
 

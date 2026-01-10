@@ -86,7 +86,7 @@ Der Bot startet und wartet auf Befehle von Ihrem Telegram-Konto.
 | `/list` | Ausstehende und laufende Aufgaben anzeigen |
 | `/completed` | Abgeschlossene Aufgaben anzeigen |
 | `/failed` | Fehlgeschlagene Aufgaben anzeigen |
-| `/status` | Aktuellen Ausführungsstatus prüfen |
+| `/status` | Aktuellen Ausführungsstatus prüfen und laufende Aufgaben abbrechen |
 | `/debug` | Systeminformationen anzeigen |
 | `/cancel` | Aufgabenerstellungsablauf abbrechen |
 | `/reset` | Alle Daten zurücksetzen (mit Bestätigung) |
@@ -128,8 +128,17 @@ Wenn während der Einrichtung aktiviert, können mehrere Aufgaben gleichzeitig a
 
 - Konfigurieren Sie die maximale Anzahl gleichzeitiger Aufgaben (1-10)
 - Jede Aufgabe zeigt ihr ID-Präfix in der Konsolenausgabe
-- `/status` zeigt alle laufenden Aufgaben
+- `/status` zeigt alle laufenden Aufgaben mit Stopp-Buttons zum Abbrechen
 - Aufgaben mit höherer Priorität erhalten weiterhin zuerst Slots
+
+### Laufende Aufgaben Abbrechen
+
+Sie können aktuell laufende Aufgaben abbrechen:
+
+1. Senden Sie `/status` um laufende Aufgaben anzuzeigen
+2. Jede laufende Aufgabe zeigt einen "Stopp"-Button
+3. Klicken Sie auf den Button, um die Aufgabe sofort zu beenden
+4. Die abgebrochene Aufgabe wird als fehlgeschlagen markiert
 
 ### Konsolenausgabe (Paralleler Modus)
 

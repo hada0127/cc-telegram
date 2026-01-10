@@ -86,7 +86,7 @@ O bot iniciará e aguardará comandos da sua conta do Telegram.
 | `/list` | Ver tarefas pendentes e em progresso |
 | `/completed` | Ver tarefas concluídas |
 | `/failed` | Ver tarefas falhadas |
-| `/status` | Verificar status de execução atual |
+| `/status` | Verificar status de execução atual e cancelar tarefas em execução |
 | `/debug` | Ver informações do sistema |
 | `/cancel` | Cancelar fluxo de criação de tarefa |
 | `/reset` | Redefinir todos os dados (com confirmação) |
@@ -128,8 +128,17 @@ Quando habilitada durante a configuração, múltiplas tarefas podem ser executa
 
 - Configure o máximo de tarefas concorrentes (1-10)
 - Cada tarefa mostra seu prefixo de ID na saída do console
-- `/status` mostra todas as tarefas em execução
+- `/status` mostra todas as tarefas em execução com botões de parar para cancelá-las
 - Tarefas de maior prioridade ainda obtêm slots primeiro
+
+### Cancelar Tarefas em Execução
+
+Você pode cancelar tarefas que estão atualmente em execução:
+
+1. Envie `/status` para ver as tarefas em execução
+2. Cada tarefa em execução exibe um botão "Parar"
+3. Clique no botão para encerrar a tarefa imediatamente
+4. A tarefa cancelada será marcada como falhada
 
 ### Saída do Console (Modo Paralelo)
 

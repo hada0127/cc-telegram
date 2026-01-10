@@ -86,7 +86,7 @@ Le bot démarrera et écoutera les commandes de votre compte Telegram.
 | `/list` | Voir les tâches en attente et en cours |
 | `/completed` | Voir les tâches terminées |
 | `/failed` | Voir les tâches échouées |
-| `/status` | Vérifier l'état d'exécution actuel |
+| `/status` | Vérifier l'état d'exécution actuel et annuler les tâches en cours |
 | `/debug` | Voir les informations système |
 | `/cancel` | Annuler le flux de création de tâche |
 | `/reset` | Réinitialiser toutes les données (avec confirmation) |
@@ -128,8 +128,17 @@ Lorsqu'activée pendant la configuration, plusieurs tâches peuvent s'exécuter 
 
 - Configurez le maximum de tâches concurrentes (1-10)
 - Chaque tâche affiche son préfixe ID dans la sortie console
-- `/status` affiche toutes les tâches en cours
+- `/status` affiche toutes les tâches en cours avec des boutons d'arrêt pour les annuler
 - Les tâches de priorité supérieure obtiennent toujours les slots en premier
+
+### Annuler les Tâches en Cours
+
+Vous pouvez annuler les tâches actuellement en cours d'exécution :
+
+1. Envoyez `/status` pour voir les tâches en cours
+2. Chaque tâche en cours affiche un bouton "Arrêter"
+3. Cliquez sur le bouton pour terminer immédiatement la tâche
+4. La tâche annulée sera marquée comme échouée
 
 ### Sortie Console (Mode Parallèle)
 
