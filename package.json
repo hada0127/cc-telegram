@@ -22,6 +22,14 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hada0127/cc-telegram.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hada0127/cc-telegram/issues"
+  },
+  "homepage": "https://github.com/hada0127/cc-telegram#readme",
   "files": [
     "src",
     "README.md",

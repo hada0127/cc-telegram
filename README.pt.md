@@ -1,7 +1,12 @@
 # cc-telegram
 
+[![npm version](https://badge.fury.io/js/cc-telegram.svg)](https://www.npmjs.com/package/cc-telegram)
+[![GitHub](https://img.shields.io/github/license/hada0127/cc-telegram)](https://github.com/hada0127/cc-telegram)
+
 🌍 **Language / 언어 / 语言**:
 [English](README.md) | [한국어](README.ko.md) | [中文](README.zh.md) | [Español](README.es.md) | [हिन्दी](README.hi.md) | [العربية](README.ar.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [日本語](README.ja.md) | [Français](README.fr.md) | [Deutsch](README.de.md)
+
+**GitHub**: [https://github.com/hada0127/cc-telegram](https://github.com/hada0127/cc-telegram)
 
 ---
 
