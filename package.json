@@ -24,7 +24,8 @@
   "license": "MIT",
   "files": [
     "src",
-    "README.md"
+    "README.md",
+    "README.*.md"
   ],
   "devDependencies": {
     "jest": "^29.7.0"
