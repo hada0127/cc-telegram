@@ -32,8 +32,8 @@ let isRunning = false;
 // 사용자 상태 관리 (작업 생성 플로우)
 const userStates = new Map();
 
-// 최근 클로드 코드 출력 (status 명령용)
-let lastClaudeOutput = [];
+// 최근 클로드 코드 출력 (status 명령용) - taskId별 관리
+const lastClaudeOutputs = new Map();
 
 /**
  * 지연 함수
@@ -300,23 +300,36 @@ async function handleFailed() {
 /* istanbul ignore next */
 async function handleStatus() {
   const tasks = await getAllPendingTasks();
-  const inProgress = tasks.find(t => t.status === 'inProgress');
+  const inProgressTasks = tasks.filter(t => t.status === 'inProgress');
 
   let text = '📊 <b>현재 상태</b>\n\n';
 
-  if (inProgress) {
-    text += `🔄 진행중: ${inProgress.requirement.slice(0, 50)}...\n`;
-    text += `   시도: ${inProgress.currentRetry + 1}/${inProgress.maxRetries}\n\n`;
+  if (inProgressTasks.length > 0) {
+    text += `🔄 진행중: ${inProgressTasks.length}개\n`;
+    for (const task of inProgressTasks) {
+      const shortId = task.id.slice(-8);
+      text += `  • [${shortId}] ${task.requirement.slice(0, 40)}...\n`;
+      text += `    시도: ${task.currentRetry + 1}/${task.maxRetries}\n`;
+    }
+    text += '\n';
   } else {
     text += '현재 진행중인 작업 없음\n\n';
   }
 
   text += `⏳ 대기중: ${tasks.filter(t => t.status === 'ready').length}개\n`;
 
-  if (lastClaudeOutput.length > 0) {
-    text += '\n<b>최근 출력:</b>\n<code>';
-    text += lastClaudeOutput.slice(-5).join('\n');
-    text += '</code>';
+  // 실행 중인 작업들의 최근 출력 표시
+  if (inProgressTasks.length > 0 && lastClaudeOutputs.size > 0) {
+    text += '\n<b>최근 출력:</b>\n';
+    for (const task of inProgressTasks) {
+      const outputs = lastClaudeOutputs.get(task.id);
+      if (outputs && outputs.length > 0) {
+        const shortId = task.id.slice(-8);
+        text += `\n[${shortId}]\n<code>`;
+        text += outputs.slice(-3).join('\n');
+        text += '</code>\n';
+      }
+    }
   }
 
   await sendMessage(text);
@@ -766,19 +779,34 @@ export function stopBot() {
 /**
  * 클로드 출력 업데이트 (status 명령용)
  * @param {string} line
+ * @param {string} taskId
  */
-export function updateClaudeOutput(line) {
-  lastClaudeOutput.push(line);
-  if (lastClaudeOutput.length > 20) {
-    lastClaudeOutput.shift();
+export function updateClaudeOutput(line, taskId) {
+  if (!taskId) return;
+
+  if (!lastClaudeOutputs.has(taskId)) {
+    lastClaudeOutputs.set(taskId, []);
+  }
+
+  const outputs = lastClaudeOutputs.get(taskId);
+  outputs.push(line);
+
+  // 각 작업당 최대 20줄 유지
+  if (outputs.length > 20) {
+    outputs.shift();
   }
 }
 
 /**
  * 클로드 출력 초기화
+ * @param {string} taskId
  */
-export function clearClaudeOutput() {
-  lastClaudeOutput = [];
+export function clearClaudeOutput(taskId) {
+  if (taskId) {
+    lastClaudeOutputs.delete(taskId);
+  } else {
+    lastClaudeOutputs.clear();
+  }
 }
 
 // 테스트용 export

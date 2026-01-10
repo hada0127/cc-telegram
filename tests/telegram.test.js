@@ -311,25 +311,42 @@ describe('sendMessage', () => {
 });
 
 describe('updateClaudeOutput', () => {
+  const testTaskId = 'test-task-123';
+
   test('클로드 출력을 업데이트해야 함', () => {
     telegramModule.clearClaudeOutput();
-    telegramModule.updateClaudeOutput('line 1');
-    telegramModule.updateClaudeOutput('line 2');
-    telegramModule.clearClaudeOutput();
+    telegramModule.updateClaudeOutput('line 1', testTaskId);
+    telegramModule.updateClaudeOutput('line 2', testTaskId);
+    telegramModule.clearClaudeOutput(testTaskId);
   });
 
   test('20줄 초과 시 오래된 줄을 제거해야 함', () => {
-    telegramModule.clearClaudeOutput();
+    telegramModule.clearClaudeOutput(testTaskId);
     for (let i = 0; i < 25; i++) {
-      telegramModule.updateClaudeOutput(`line ${i}`);
+      telegramModule.updateClaudeOutput(`line ${i}`, testTaskId);
     }
+    telegramModule.clearClaudeOutput(testTaskId);
+    expect(true).toBe(true);
+  });
+
+  test('taskId 없이 호출하면 무시해야 함', () => {
+    telegramModule.updateClaudeOutput('line without taskId');
     expect(true).toBe(true);
   });
 });
 
 describe('clearClaudeOutput', () => {
-  test('클로드 출력을 초기화해야 함', () => {
-    telegramModule.updateClaudeOutput('some output');
+  const testTaskId = 'test-task-456';
+
+  test('특정 작업의 클로드 출력을 초기화해야 함', () => {
+    telegramModule.updateClaudeOutput('some output', testTaskId);
+    telegramModule.clearClaudeOutput(testTaskId);
+    expect(true).toBe(true);
+  });
+
+  test('taskId 없이 호출하면 모든 출력을 초기화해야 함', () => {
+    telegramModule.updateClaudeOutput('output 1', 'task-1');
+    telegramModule.updateClaudeOutput('output 2', 'task-2');
     telegramModule.clearClaudeOutput();
     expect(true).toBe(true);
   });

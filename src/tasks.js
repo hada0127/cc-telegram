@@ -162,10 +162,20 @@ async function saveTask(task) {
  * @returns {Promise<Task|null>}
  */
 export async function getNextTask() {
+  const tasks = await getNextTasks(1);
+  return tasks.length > 0 ? tasks[0] : null;
+}
+
+/**
+ * 다음 실행할 작업들 가져오기 (병렬 실행용)
+ * @param {number} count - 가져올 작업 개수
+ * @returns {Promise<Task[]>}
+ */
+export async function getNextTasks(count = 1) {
   const index = await loadTasksIndex();
   const readyTasks = index.tasks.filter(t => t.status === 'ready');
 
-  if (readyTasks.length === 0) return null;
+  if (readyTasks.length === 0) return [];
 
   // 우선순위 높은 것 먼저 (내림차순), 같으면 오래된 것 먼저 (오름차순)
   readyTasks.sort((a, b) => {
@@ -181,8 +191,19 @@ export async function getNextTask() {
     return new Date(a.createdAt) - new Date(b.createdAt);
   });
 
-  const next = readyTasks[0];
-  return loadTask(next.id);
+  const selected = readyTasks.slice(0, count);
+  const tasks = [];
+
+  for (const item of selected) {
+    try {
+      const task = await loadTask(item.id);
+      tasks.push(task);
+    } catch {
+      // 작업 로드 실패 시 무시
+    }
+  }
+
+  return tasks;
 }
 
 /**

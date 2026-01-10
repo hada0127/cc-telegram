@@ -229,10 +229,28 @@ export async function initialize(cwd) {
   const maxRetriesInput = await prompt('기본 반복횟수를 입력하세요 (15 권장): ');
   const defaultMaxRetries = parseInt(maxRetriesInput, 10) || 15;
 
-  // 9. 설정 저장
-  await saveConfig({ botToken, chatId: detectedChatId, debugMode: false, defaultMaxRetries });
+  // 9. 병렬 실행 설정
+  console.log('\n🔄 병렬 실행 설정\n');
+  console.log('여러 작업을 동시에 실행할 수 있습니다.');
+  console.log('주의: 병렬 실행 시 시스템 리소스를 더 많이 사용합니다.\n');
+  const parallelInput = await prompt('병렬 실행을 사용하시겠습니까? (y/N): ');
+  const parallelExecution = parallelInput.toLowerCase() === 'y';
 
-  // 10. 봇 명령어 등록 (자동완성용)
+  let maxParallel = 3;
+  if (parallelExecution) {
+    const maxParallelInput = await prompt('최대 동시 실행 개수를 입력하세요 (3 권장): ');
+    maxParallel = parseInt(maxParallelInput, 10) || 3;
+    if (maxParallel < 1) maxParallel = 1;
+    if (maxParallel > 10) maxParallel = 10;
+    console.log(`✅ 병렬 실행: 최대 ${maxParallel}개 동시 실행`);
+  } else {
+    console.log('✅ 순차 실행 모드');
+  }
+
+  // 10. 설정 저장
+  await saveConfig({ botToken, chatId: detectedChatId, debugMode: false, defaultMaxRetries, parallelExecution, maxParallel });
+
+  // 11. 봇 명령어 등록 (자동완성용)
   console.log('📝 봇 명령어 등록 중...');
   const commands = [
     { command: 'start', description: 'chatId 확인' },

@@ -612,6 +612,16 @@ describe('executor 모듈 함수 테스트', () => {
     expect(currentTaskId).toBeNull();
   });
 
+  test('getRunningTaskIds가 함수여야 함', () => {
+    expect(typeof executorModule.getRunningTaskIds).toBe('function');
+  });
+
+  test('getRunningTaskIds 초기값은 빈 배열이어야 함', () => {
+    const runningTaskIds = executorModule.getRunningTaskIds();
+    expect(Array.isArray(runningTaskIds)).toBe(true);
+    expect(runningTaskIds.length).toBe(0);
+  });
+
   test('stopExecutor가 오류 없이 호출되어야 함', () => {
     expect(() => executorModule.stopExecutor()).not.toThrow();
   });
