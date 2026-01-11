@@ -47,6 +47,25 @@ Claude가 작업 내용에 따라 자동으로 적용하는 스킬들:
 - .claude/skills/*/SKILL.md: 각 스킬 상세 정의
 
 ## 최근 개선 사항
+### 2026-01-11 적용 완료
+1. **작업 생성 시 파일 첨부 기능**
+   - 요구사항/완료 조건 입력 시 파일 첨부 가능
+   - 파일 먼저 전송 후 텍스트로 요구사항 입력
+   - 첨부 파일은 `.cc-telegram/temp/{taskId}/`에 저장
+   - 작업 완료/실패/취소 시 자동으로 임시 파일 삭제
+   - 세션 기반 파일 관리 (sessionId → taskId로 이동)
+
+2. **첨부 파일 관리 유틸리티** (src/utils/attachments.js)
+   - generateSessionId(): 임시 세션 ID 생성
+   - saveAttachment(): 파일 저장
+   - moveSessionToTask(): 세션 → 작업으로 파일 이동
+   - cleanupTaskTempDir(): 작업 완료 시 정리
+   - cleanupOldTempDirs(): 오래된 세션 정리
+
+3. **테스트 케이스 추가**
+   - attachments.test.js: 17개 테스트 케이스
+   - 총 353개 테스트 케이스 (2026-01-11 기준)
+
 ### 2026-01-10 적용 완료
 1. **Claude 실행 명령어 설정화** (config.claudeCommand)
    - config.json에서 claudeCommand 필드로 사용자 지정 가능

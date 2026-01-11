@@ -4,7 +4,9 @@
  */
 
 import os from 'os';
-import { loadConfig } from './config.js';
+import fs from 'fs/promises';
+import path from 'path';
+import { loadConfig, getDataDir } from './config.js';
 import {
   createTask,
   getAllPendingTasks,
@@ -19,6 +21,13 @@ import {
 import { cancelRunningTask, isTaskRunning, escapeHtml } from './executor.js';
 import { info, error, debug } from './utils/logger.js';
 import { t, getCurrentLanguage } from './i18n.js';
+import {
+  generateSessionId,
+  saveAttachment,
+  getTaskTempDir,
+  cleanupTaskTempDir,
+  moveSessionToTask
+} from './utils/attachments.js';
 
 // 우선순위 레이블 (동적 생성)
 function getPriorityLabels() {
@@ -98,6 +107,37 @@ async function callApi(method, params = {}, maxRetries = 3) {
   }
 
   throw lastError;
+}
+
+/**
+ * 텔레그램 파일 다운로드
+ * @param {string} fileId - 텔레그램 file_id
+ * @returns {Promise<{buffer: Buffer, filePath: string}|null>}
+ */
+/* istanbul ignore next */
+async function downloadFile(fileId) {
+  if (!config) config = await loadConfig();
+
+  try {
+    // 1. getFile API로 file_path 가져오기
+    const fileInfo = await callApi('getFile', { file_id: fileId });
+    if (!fileInfo || !fileInfo.file_path) {
+      return null;
+    }
+
+    // 2. 파일 다운로드
+    const fileUrl = `https://api.telegram.org/file/bot${config.botToken}/${fileInfo.file_path}`;
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      return null;
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    return { buffer, filePath: fileInfo.file_path };
+  } catch (err) {
+    error('File download failed', err.message);
+    return null;
+  }
 }
 
 /**
@@ -464,15 +504,24 @@ async function finishSimpleTaskCreation(chatId, state) {
     priority: PRIORITY.NORMAL
   });
 
+  // 세션 첨부 파일을 작업 폴더로 이동
+  if (state.sessionId && state.attachments && state.attachments.length > 0) {
+    await moveSessionToTask(state.sessionId, task.id);
+  }
+
   userStates.delete(chatId);
 
-  await sendMessage(
-    `✅ <b>${t('telegram.task_registered')}</b>\n\n` +
+  let message = `✅ <b>${t('telegram.task_registered')}</b>\n\n` +
     `📝 ${t('telegram.requirement_label', { text: state.requirement.slice(0, 100) })}...\n` +
-    `⚡ ${t('telegram.type_simple')}`
-  );
+    `⚡ ${t('telegram.type_simple')}`;
 
-  info('New simple task created', { taskId: task.id });
+  if (state.attachments && state.attachments.length > 0) {
+    message += `\n${t('files.files_attached', { count: state.attachments.length })}`;
+  }
+
+  await sendMessage(message);
+
+  info('New simple task created', { taskId: task.id, attachments: state.attachments?.length || 0 });
 }
 
 /**
@@ -488,20 +537,29 @@ async function finishTaskCreation(chatId, state, retries) {
     priority: state.priority || PRIORITY.NORMAL
   });
 
+  // 세션 첨부 파일을 작업 폴더로 이동
+  if (state.sessionId && state.attachments && state.attachments.length > 0) {
+    await moveSessionToTask(state.sessionId, task.id);
+  }
+
   userStates.delete(chatId);
 
   const priorityLabels = getPriorityLabels();
   const priorityLabel = priorityLabels[task.priority] || priorityLabels[PRIORITY.NORMAL];
 
-  await sendMessage(
-    `✅ <b>${t('telegram.task_registered')}</b>\n\n` +
+  let message = `✅ <b>${t('telegram.task_registered')}</b>\n\n` +
     `📝 ${t('telegram.requirement_label', { text: state.requirement.slice(0, 100) })}...\n` +
     `🎯 ${t('telegram.criteria_label', { text: state.criteria.slice(0, 100) })}...\n` +
     `⚡ ${t('telegram.priority_label', { priority: priorityLabel })}\n` +
-    `🔄 ${t('telegram.retries_label', { count: retries })}`
-  );
+    `🔄 ${t('telegram.retries_label', { count: retries })}`;
 
-  info('New task created', { taskId: task.id, priority: task.priority });
+  if (state.attachments && state.attachments.length > 0) {
+    message += `\n${t('files.files_attached', { count: state.attachments.length })}`;
+  }
+
+  await sendMessage(message);
+
+  info('New task created', { taskId: task.id, priority: task.priority, attachments: state.attachments?.length || 0 });
 }
 
 /**
@@ -530,6 +588,8 @@ async function handleCallbackQuery(query) {
     if (state && state.step === 'complexity') {
       state.step = 'simple_requirement';
       state.isSimple = true;
+      state.sessionId = generateSessionId();
+      state.attachments = [];
       userStates.set(chatId, state);
       await sendMessage(t('telegram.step_requirement'));
     } else {
@@ -544,6 +604,8 @@ async function handleCallbackQuery(query) {
     if (state && state.step === 'complexity') {
       state.step = 'requirement';
       state.isSimple = false;
+      state.sessionId = generateSessionId();
+      state.attachments = [];
       userStates.set(chatId, state);
       await sendMessage(t('telegram.step1_requirement'));
     } else {
@@ -687,6 +749,69 @@ async function handleCallbackQuery(query) {
 }
 
 /**
+ * 첨부 파일 처리 (document, photo)
+ */
+/* istanbul ignore next */
+async function handleFileAttachment(chatId, message) {
+  const state = userStates.get(chatId);
+  if (!state || !state.sessionId) {
+    // 작업 생성 플로우가 아니면 무시
+    return false;
+  }
+
+  // 요구사항/완료조건 입력 단계에서만 파일 첨부 허용
+  const allowedSteps = ['simple_requirement', 'requirement', 'criteria'];
+  if (!allowedSteps.includes(state.step)) {
+    return false;
+  }
+
+  let fileId = null;
+  let fileName = null;
+
+  // document (파일)
+  if (message.document) {
+    fileId = message.document.file_id;
+    fileName = message.document.file_name || `file_${Date.now()}`;
+  }
+  // photo (사진) - 가장 큰 사이즈 선택
+  else if (message.photo && message.photo.length > 0) {
+    const largestPhoto = message.photo[message.photo.length - 1];
+    fileId = largestPhoto.file_id;
+    fileName = `photo_${Date.now()}.jpg`;
+  }
+
+  if (!fileId) {
+    return false;
+  }
+
+  try {
+    // 파일 다운로드
+    const downloaded = await downloadFile(fileId);
+    if (!downloaded) {
+      await sendMessage(t('files.file_download_failed', { error: 'Download failed' }));
+      return true;
+    }
+
+    // 세션 디렉토리에 저장
+    await saveAttachment(state.sessionId, fileName, downloaded.buffer);
+
+    // 첨부 파일 목록에 추가
+    if (!state.attachments) {
+      state.attachments = [];
+    }
+    state.attachments.push(fileName);
+    userStates.set(chatId, state);
+
+    await sendMessage(t('files.file_received', { fileName }));
+    return true;
+  } catch (err) {
+    error('File attachment failed', err.message);
+    await sendMessage(t('files.file_download_failed', { error: err.message }));
+    return true;
+  }
+}
+
+/**
  * 메시지 처리
  */
 /* istanbul ignore next */
@@ -700,6 +825,21 @@ async function handleMessage(message) {
   if (chatId !== config.chatId) {
     debug('Unauthorized chatId', { chatId });
     return;
+  }
+
+  // 파일 첨부 처리 (document나 photo가 있는 경우)
+  if (message.document || message.photo) {
+    const handled = await handleFileAttachment(chatId, message);
+    if (handled) {
+      // caption이 있으면 텍스트로도 처리
+      if (message.caption) {
+        const captionHandled = await handleNewTaskFlow(chatId, message.caption);
+        if (!captionHandled && !message.caption.startsWith('/')) {
+          // 캡션이 명령어가 아니고 플로우에서 처리되지 않으면 무시
+        }
+      }
+      return;
+    }
   }
 
   // 명령어 처리
@@ -757,8 +897,11 @@ async function processUpdate(update) {
   try {
     if (update.callback_query) {
       await handleCallbackQuery(update.callback_query);
-    } else if (update.message && update.message.text) {
-      await handleMessage(update.message);
+    } else if (update.message) {
+      // text, document, photo 중 하나라도 있으면 처리
+      if (update.message.text || update.message.document || update.message.photo) {
+        await handleMessage(update.message);
+      }
     }
   } catch (err) {
     error('Update processing error', err.message);

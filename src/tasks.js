@@ -9,6 +9,7 @@ import { getDataDir } from './config.js';
 import { warn, error as logError } from './utils/logger.js';
 import { atomicWriteJson } from './utils/atomicFile.js';
 import { t } from './i18n.js';
+import { cleanupTaskTempDir } from './utils/attachments.js';
 
 /**
  * 날짜 기반 ID 생성
@@ -298,6 +299,9 @@ export async function completeTask(taskId, summary) {
 
   // tasks에서 제거
   await removeFromTasks(taskId);
+
+  // 첨부 파일 임시 디렉토리 정리
+  await cleanupTaskTempDir(taskId);
 }
 
 /**
@@ -339,6 +343,9 @@ export async function failTask(taskId, reason) {
 
   // tasks에서 제거
   await removeFromTasks(taskId);
+
+  // 첨부 파일 임시 디렉토리 정리
+  await cleanupTaskTempDir(taskId);
 }
 
 /**

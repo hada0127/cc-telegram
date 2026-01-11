@@ -84,9 +84,9 @@
     "system_status_title": "System Status",
     "memory_usage": "Memory: {usage}MB",
     "uptime": "Uptime: {minutes} min",
-    "step_requirement": "Enter your requirement.",
-    "step1_requirement": "Step 1: Enter your requirement.",
-    "step2_criteria": "Step 2: Enter completion criteria.\n\n(e.g., \"All tests pass and build succeeds\")",
+    "step_requirement": "Enter your requirement.\n\n💡 If you need to attach files, send the files first, then enter your requirement as text at the end.",
+    "step1_requirement": "Step 1: Enter your requirement.\n\n💡 If you need to attach files, send the files first, then enter your requirement as text at the end.",
+    "step2_criteria": "Step 2: Enter completion criteria.\n\n(e.g., \"All tests pass and build succeeds\")\n\n💡 If you need to attach files, send the files first, then enter your criteria as text at the end.",
     "step3_priority": "Step 3: Select priority.",
     "step4_retries": "Step 4: Select retry count.",
     "retries_10": "10 retries",
@@ -160,6 +160,12 @@
   },
   "tasks": {
     "cancelled_by_user": "Cancelled by user"
+  },
+  "files": {
+    "file_received": "📎 File attached: {fileName}",
+    "file_download_failed": "File download failed: {error}",
+    "files_attached": "📎 Attached files: {count}",
+    "files_cleanup_failed": "Temp file cleanup failed: {error}"
   },
   "prompt": {
     "title": "Task Request",
