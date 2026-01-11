@@ -111,6 +111,17 @@ Für Aufgaben mit Abschlusskriterien und automatischer Wiederholung:
 5. Wählen Sie die Prioritätsstufe
 6. Wählen Sie die Anzahl der Wiederholungen (10 oder benutzerdefiniert)
 
+### Dateianhänge
+
+Sie können Dateien anhängen, wenn Sie Anforderungen oder Abschlusskriterien eingeben:
+
+1. Wenn Sie aufgefordert werden, Anforderungen/Kriterien einzugeben, senden Sie zuerst Ihre Dateien (Bilder, Dokumente usw.)
+2. Für jeden angehängten Datei wird eine Bestätigungsnachricht angezeigt
+3. Geben Sie dann Ihre Anforderungen/Kriterien als Text ein
+4. Angehängte Dateien werden zusammen mit der Aufgabe an Claude übergeben
+
+**Hinweis**: Angehängte Dateien werden automatisch gelöscht, wenn die Aufgabe abgeschlossen wird, fehlschlägt oder abgebrochen wird.
+
 ## Aufgabenpriorität
 
 Aufgaben werden in Prioritätsreihenfolge ausgeführt:

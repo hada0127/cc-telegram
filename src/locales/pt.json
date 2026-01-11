@@ -84,9 +84,9 @@
     "system_status_title": "Status do Sistema",
     "memory_usage": "Memória: {usage}MB",
     "uptime": "Tempo ativo: {minutes} min",
-    "step_requirement": "Digite seu requisito.",
-    "step1_requirement": "Passo 1: Digite seu requisito.",
-    "step2_criteria": "Passo 2: Digite os critérios de conclusão.\n\n(ex., \"Todos os testes passam e build bem-sucedido\")",
+    "step_requirement": "Digite seu requisito.\n\n💡 Se precisar anexar arquivos, envie os arquivos primeiro e depois digite seu requisito como texto.",
+    "step1_requirement": "Passo 1: Digite seu requisito.\n\n💡 Se precisar anexar arquivos, envie os arquivos primeiro e depois digite seu requisito como texto.",
+    "step2_criteria": "Passo 2: Digite os critérios de conclusão.\n\n(ex., \"Todos os testes passam e build bem-sucedido\")\n\n💡 Se precisar anexar arquivos, envie os arquivos primeiro e depois digite os critérios como texto.",
     "step3_priority": "Passo 3: Selecione a prioridade.",
     "step4_retries": "Passo 4: Selecione o número de tentativas.",
     "retries_10": "10 tentativas",
@@ -160,6 +160,12 @@
   },
   "tasks": {
     "cancelled_by_user": "Cancelado pelo usuário"
+  },
+  "files": {
+    "file_received": "📎 Arquivo anexado: {fileName}",
+    "file_download_failed": "Falha ao baixar arquivo: {error}",
+    "files_attached": "📎 Arquivos anexados: {count}",
+    "files_cleanup_failed": "Falha ao limpar arquivos temporários: {error}"
   },
   "prompt": {
     "title": "Solicitação de Tarefa",

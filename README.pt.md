@@ -111,6 +111,17 @@ Para tarefas com critérios de conclusão e tentativa automática:
 5. Selecione o nível de prioridade
 6. Escolha a contagem de tentativas (10 ou personalizado)
 
+### Anexos de Arquivos
+
+Você pode anexar arquivos ao inserir requisitos ou critérios de conclusão:
+
+1. Quando solicitado para requisitos/critérios, primeiro envie seus arquivos (imagens, documentos, etc.)
+2. Uma mensagem de confirmação aparecerá para cada arquivo anexado
+3. Em seguida, insira seus requisitos/critérios como texto
+4. Os arquivos anexados serão passados ao Claude junto com a tarefa
+
+**Nota**: Os arquivos anexados são automaticamente excluídos quando a tarefa é concluída, falha ou é cancelada.
+
 ## Prioridade de Tarefas
 
 Tarefas são executadas em ordem de prioridade:

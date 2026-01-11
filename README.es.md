@@ -111,6 +111,17 @@ Para tareas con criterios de finalización y reintento automático:
 5. Selecciona el nivel de prioridad
 6. Elige el número de reintentos (10 o personalizado)
 
+### Archivos Adjuntos
+
+Puedes adjuntar archivos al ingresar requisitos o criterios de finalización:
+
+1. Cuando se te solicite requisitos/criterios, primero envía tus archivos (imágenes, documentos, etc.)
+2. Aparecerá un mensaje de confirmación por cada archivo adjunto
+3. Luego ingresa tus requisitos/criterios como texto
+4. Los archivos adjuntos se pasarán a Claude junto con la tarea
+
+**Nota**: Los archivos adjuntos se eliminan automáticamente cuando la tarea se completa, falla o se cancela.
+
 ## Prioridad de Tareas
 
 Las tareas se ejecutan en orden de prioridad:

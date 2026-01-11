@@ -84,9 +84,9 @@
     "system_status_title": "Estado del Sistema",
     "memory_usage": "Memoria: {usage}MB",
     "uptime": "Tiempo activo: {minutes} min",
-    "step_requirement": "Ingresa tu requisito.",
-    "step1_requirement": "Paso 1: Ingresa tu requisito.",
-    "step2_criteria": "Paso 2: Ingresa los criterios de finalización.\n\n(ej., \"Todas las pruebas pasan y la compilación tiene éxito\")",
+    "step_requirement": "Ingresa tu requisito.\n\n💡 Si necesitas adjuntar archivos, envía los archivos primero y luego ingresa tu requisito como texto.",
+    "step1_requirement": "Paso 1: Ingresa tu requisito.\n\n💡 Si necesitas adjuntar archivos, envía los archivos primero y luego ingresa tu requisito como texto.",
+    "step2_criteria": "Paso 2: Ingresa los criterios de finalización.\n\n(ej., \"Todas las pruebas pasan y la compilación tiene éxito\")\n\n💡 Si necesitas adjuntar archivos, envía los archivos primero y luego ingresa los criterios como texto.",
     "step3_priority": "Paso 3: Selecciona la prioridad.",
     "step4_retries": "Paso 4: Selecciona el número de reintentos.",
     "retries_10": "10 reintentos",
@@ -160,6 +160,12 @@
   },
   "tasks": {
     "cancelled_by_user": "Cancelado por el usuario"
+  },
+  "files": {
+    "file_received": "📎 Archivo adjunto: {fileName}",
+    "file_download_failed": "Error al descargar archivo: {error}",
+    "files_attached": "📎 Archivos adjuntos: {count}",
+    "files_cleanup_failed": "Error al limpiar archivos temporales: {error}"
   },
   "prompt": {
     "title": "Solicitud de Tarea",

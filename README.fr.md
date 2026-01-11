@@ -111,6 +111,17 @@ Pour les tâches avec critères de complétion et réessai automatique :
 5. Sélectionnez le niveau de priorité
 6. Choisissez le nombre de réessais (10 ou personnalisé)
 
+### Pièces Jointes
+
+Vous pouvez joindre des fichiers lors de la saisie des exigences ou des critères de complétion :
+
+1. Lorsque vous êtes invité à entrer des exigences/critères, envoyez d'abord vos fichiers (images, documents, etc.)
+2. Un message de confirmation s'affichera pour chaque fichier joint
+3. Ensuite, entrez vos exigences/critères sous forme de texte
+4. Les fichiers joints seront transmis à Claude avec la tâche
+
+**Remarque** : Les pièces jointes sont automatiquement supprimées lorsque la tâche est terminée, échoue ou est annulée.
+
 ## Priorité des Tâches
 
 Les tâches sont exécutées par ordre de priorité :

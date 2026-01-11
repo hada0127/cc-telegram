@@ -111,6 +111,17 @@ For tasks with completion criteria and auto-retry:
 5. Select priority level
 6. Choose retry count (10 or custom)
 
+### File Attachments
+
+You can attach files when entering requirements or completion criteria:
+
+1. When prompted for requirements/criteria, first send your files (images, documents, etc.)
+2. A confirmation message will appear for each attached file
+3. Then enter your requirements/criteria as text
+4. Attached files will be passed to Claude along with the task
+
+**Note**: Attached files are automatically deleted when the task is completed, failed, or canceled.
+
 ## Task Priority
 
 Tasks are executed in priority order:

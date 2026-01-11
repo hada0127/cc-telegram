@@ -84,9 +84,9 @@
     "system_status_title": "État du système",
     "memory_usage": "Mémoire : {usage} Mo",
     "uptime": "Temps de fonctionnement : {minutes} min",
-    "step_requirement": "Entrez votre exigence.",
-    "step1_requirement": "Étape 1 : Entrez votre exigence.",
-    "step2_criteria": "Étape 2 : Entrez les critères d'achèvement.\n\n(ex., « Tous les tests réussissent et la compilation réussit »)",
+    "step_requirement": "Entrez votre exigence.\n\n💡 Si vous devez joindre des fichiers, envoyez d'abord les fichiers, puis entrez votre exigence en texte.",
+    "step1_requirement": "Étape 1 : Entrez votre exigence.\n\n💡 Si vous devez joindre des fichiers, envoyez d'abord les fichiers, puis entrez votre exigence en texte.",
+    "step2_criteria": "Étape 2 : Entrez les critères d'achèvement.\n\n(ex., « Tous les tests réussissent et la compilation réussit »)\n\n💡 Si vous devez joindre des fichiers, envoyez d'abord les fichiers, puis entrez les critères en texte.",
     "step3_priority": "Étape 3 : Sélectionnez la priorité.",
     "step4_retries": "Étape 4 : Sélectionnez le nombre de tentatives.",
     "retries_10": "10 tentatives",
@@ -160,6 +160,12 @@
   },
   "tasks": {
     "cancelled_by_user": "Annulé par l'utilisateur"
+  },
+  "files": {
+    "file_received": "📎 Fichier joint : {fileName}",
+    "file_download_failed": "Échec du téléchargement du fichier : {error}",
+    "files_attached": "📎 Fichiers joints : {count}",
+    "files_cleanup_failed": "Échec du nettoyage des fichiers temporaires : {error}"
   },
   "prompt": {
     "title": "Demande de tâche",

@@ -84,9 +84,9 @@
     "system_status_title": "Systemstatus",
     "memory_usage": "Speicher: {usage}MB",
     "uptime": "Laufzeit: {minutes} Min",
-    "step_requirement": "Geben Sie Ihre Anforderung ein.",
-    "step1_requirement": "Schritt 1: Geben Sie Ihre Anforderung ein.",
-    "step2_criteria": "Schritt 2: Geben Sie die Abschlusskriterien ein.\n\n(z.B., \"Alle Tests bestanden und Build erfolgreich\")",
+    "step_requirement": "Geben Sie Ihre Anforderung ein.\n\n💡 Wenn Sie Dateien anhängen müssen, senden Sie zuerst die Dateien und geben Sie dann Ihre Anforderung als Text ein.",
+    "step1_requirement": "Schritt 1: Geben Sie Ihre Anforderung ein.\n\n💡 Wenn Sie Dateien anhängen müssen, senden Sie zuerst die Dateien und geben Sie dann Ihre Anforderung als Text ein.",
+    "step2_criteria": "Schritt 2: Geben Sie die Abschlusskriterien ein.\n\n(z.B., \"Alle Tests bestanden und Build erfolgreich\")\n\n💡 Wenn Sie Dateien anhängen müssen, senden Sie zuerst die Dateien und geben Sie dann die Kriterien als Text ein.",
     "step3_priority": "Schritt 3: Wählen Sie die Priorität.",
     "step4_retries": "Schritt 4: Wählen Sie die Anzahl der Wiederholungen.",
     "retries_10": "10 Wiederholungen",
@@ -160,6 +160,12 @@
   },
   "tasks": {
     "cancelled_by_user": "Vom Benutzer abgebrochen"
+  },
+  "files": {
+    "file_received": "📎 Datei angehängt: {fileName}",
+    "file_download_failed": "Datei-Download fehlgeschlagen: {error}",
+    "files_attached": "📎 Angehängte Dateien: {count}",
+    "files_cleanup_failed": "Bereinigung temporärer Dateien fehlgeschlagen: {error}"
   },
   "prompt": {
     "title": "Aufgabenanfrage",
