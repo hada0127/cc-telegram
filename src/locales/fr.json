@@ -154,6 +154,8 @@
     "unknown_error": "Erreur inconnue",
     "task_done": "Tâche terminée. {output}",
     "task_fail_summary": "Tâche échouée.\nRaison de l'échec : {reason}\n{output}",
+    "cli_output_label": "Sortie CLI :",
+    "failure_reason_prefix": "Raison de l'échec : {reason}",
     "task_crash": "Erreur pendant l'exécution : {error}",
     "task_crashed": "La tâche a planté pendant l'exécution",
     "crash_reason": "Erreur : {error}"

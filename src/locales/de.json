@@ -154,6 +154,8 @@
     "unknown_error": "Unbekannter Fehler",
     "task_done": "Aufgabe abgeschlossen. {output}",
     "task_fail_summary": "Aufgabe fehlgeschlagen.\nFehlergrund: {reason}\n{output}",
+    "cli_output_label": "CLI-Ausgabe:",
+    "failure_reason_prefix": "Fehlergrund: {reason}",
     "task_crash": "Fehler während der Ausführung: {error}",
     "task_crashed": "Aufgabe während der Ausführung abgestürzt",
     "crash_reason": "Fehler: {error}"

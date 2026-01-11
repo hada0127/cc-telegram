@@ -154,6 +154,8 @@
     "unknown_error": "알 수 없는 오류",
     "task_done": "작업 완료. {output}",
     "task_fail_summary": "작업 실패.\n실패 원인: {reason}\n{output}",
+    "cli_output_label": "CLI 출력:",
+    "failure_reason_prefix": "실패 원인: {reason}",
     "task_crash": "실행 중 오류 발생: {error}",
     "task_crashed": "작업 실행 중 오류 발생",
     "crash_reason": "오류: {error}"

@@ -154,6 +154,8 @@
     "unknown_error": "Неизвестная ошибка",
     "task_done": "Задача выполнена. {output}",
     "task_fail_summary": "Задача не выполнена.\nПричина неудачи: {reason}\n{output}",
+    "cli_output_label": "Вывод CLI:",
+    "failure_reason_prefix": "Причина неудачи: {reason}",
     "task_crash": "Ошибка во время выполнения: {error}",
     "task_crashed": "Задача аварийно завершилась во время выполнения",
     "crash_reason": "Ошибка: {error}"

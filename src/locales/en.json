@@ -154,6 +154,8 @@
     "unknown_error": "Unknown error",
     "task_done": "Task complete. {output}",
     "task_fail_summary": "Task failed.\nFailure reason: {reason}\n{output}",
+    "cli_output_label": "CLI Output:",
+    "failure_reason_prefix": "Failure reason: {reason}",
     "task_crash": "Error during execution: {error}",
     "task_crashed": "Task crashed during execution",
     "crash_reason": "Error: {error}"

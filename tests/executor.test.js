@@ -559,28 +559,31 @@ describe('buildPrompt', () => {
 });
 
 describe('generateSummary', () => {
-  test('성공 시 요약을 생성해야 함', () => {
+  test('성공 시 전체 출력을 반환해야 함', () => {
     const output = '작업 완료\n모든 테스트 통과\n빌드 성공';
     const summary = executorModule.generateSummary(output, true);
-    // Check that summary contains the task_done i18n key content pattern
-    expect(summary).toContain('.');
-    expect(summary.length).toBeGreaterThan(0);
+    // 전체 출력이 포함되어야 함 (HTML 이스케이프됨)
+    expect(summary).toContain('작업 완료');
+    expect(summary).toContain('모든 테스트 통과');
+    expect(summary).toContain('빌드 성공');
   });
 
-  test('실패 시 요약을 생성해야 함', () => {
+  test('실패 시 전체 출력과 실패 이유를 반환해야 함', () => {
     const output = '작업 실패\n오류 발생';
     const reason = '빌드 오류';
     const summary = executorModule.generateSummary(output, false, reason);
-    // Check that the summary contains the failure reason
+    // 실패 이유와 전체 출력이 포함되어야 함
     expect(summary).toContain('빌드 오류');
-    expect(summary.length).toBeGreaterThan(0);
+    expect(summary).toContain('작업 실패');
+    expect(summary).toContain('오류 발생');
   });
 
-  test('실패 시 이유 없이 요약을 생성해야 함', () => {
+  test('실패 시 이유 없이도 전체 출력을 반환해야 함', () => {
     const output = '작업 실패\n오류 발생';
     const summary = executorModule.generateSummary(output, false);
-    // When no reason is provided, summary should not contain reason text
-    expect(summary.length).toBeGreaterThan(0);
+    // 전체 출력이 포함되어야 함
+    expect(summary).toContain('작업 실패');
+    expect(summary).toContain('오류 발생');
   });
 
   test('HTML 특수 문자를 이스케이프해야 함', () => {
@@ -592,16 +595,16 @@ describe('generateSummary', () => {
   test('빈 출력도 처리해야 함', () => {
     const output = '';
     const summary = executorModule.generateSummary(output, true);
-    // Summary should still be generated for empty output
-    expect(summary.length).toBeGreaterThan(0);
+    // 빈 문자열도 처리되어야 함 (빈 출력은 빈 문자열)
+    expect(typeof summary).toBe('string');
   });
 
-  test('긴 출력을 잘라야 함', () => {
+  test('긴 출력도 전체를 반환해야 함', () => {
     const lines = Array(20).fill('아주 긴 줄의 텍스트입니다.');
     const output = lines.join('\n');
     const summary = executorModule.generateSummary(output, true);
-    // 마지막 5줄만 포함되어야 함
-    expect(summary.split('\n').length).toBeLessThan(10);
+    // 모든 줄이 포함되어야 함 (CLI처럼 전체 출력)
+    expect(summary.split('\n').length).toBe(20);
   });
 });
 

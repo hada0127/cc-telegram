@@ -154,6 +154,8 @@
     "unknown_error": "خطأ غير معروف",
     "task_done": "اكتملت المهمة. {output}",
     "task_fail_summary": "فشلت المهمة.\nسبب الفشل: {reason}\n{output}",
+    "cli_output_label": "مخرجات CLI:",
+    "failure_reason_prefix": "سبب الفشل: {reason}",
     "task_crash": "خطأ أثناء التنفيذ: {error}",
     "task_crashed": "تعطلت المهمة أثناء التنفيذ",
     "crash_reason": "خطأ: {error}"

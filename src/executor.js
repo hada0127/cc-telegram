@@ -13,7 +13,7 @@ import {
   failTask
 } from './tasks.js';
 import { loadConfig } from './config.js';
-import { sendMessage, updateClaudeOutput, clearClaudeOutput } from './telegram.js';
+import { sendMessage, sendLongMessage, updateClaudeOutput, clearClaudeOutput } from './telegram.js';
 import { info, error, debug } from './utils/logger.js';
 import { t } from './i18n.js';
 
@@ -324,22 +324,22 @@ function extractFailureReason(output) {
 }
 
 /**
- * 작업 요약 생성
+ * 작업 요약 생성 (전체 출력 반환)
  * @param {string} output
  * @param {boolean} success
  * @param {string|null} reason
  * @returns {string}
  */
 function generateSummary(output, success, reason = null) {
-  // 마지막 몇 줄 추출
-  const lines = output.split('\n').filter(l => l.trim());
-  const lastLines = escapeHtml(lines.slice(-5).join('\n'));
+  // 전체 출력 반환 (CLI에서 보이는 것처럼)
+  const fullOutput = escapeHtml(output);
 
   if (success) {
-    return t('executor.task_done', { output: lastLines.slice(0, 250) });
+    return fullOutput;
   } else {
-    // 실패 이유가 있으면 포함
-    return t('executor.task_fail_summary', { reason: escapeHtml(reason || ''), output: lastLines.slice(0, 200) });
+    // 실패 이유가 있으면 앞에 포함
+    const reasonText = reason ? `${t('executor.failure_reason_prefix', { reason: escapeHtml(reason) })}\n\n` : '';
+    return reasonText + fullOutput;
   }
 }
 
@@ -392,8 +392,8 @@ async function processTask(task, isParallel = false) {
 
     if (success) {
       // 성공
-      const summary = generateSummary(output, true);
-      await completeTask(task.id, summary);
+      const fullOutput = generateSummary(output, true);
+      await completeTask(task.id, fullOutput);
       const totalRetries = task.currentRetry + 1;
 
       // CLI에 작업 완료 표시
@@ -401,12 +401,15 @@ async function processTask(task, isParallel = false) {
       console.log(`${prefix}${t('executor.console_task_complete', { id: task.id, current: totalRetries, max: task.maxRetries })}`);
       console.log('-'.repeat(60) + '\n');
 
+      // 헤더 메시지
       await sendMessage(
         `✅ <b>${t('executor.task_complete')}</b>\n\n` +
         `📝 ${t('executor.requirement_label', { text: task.requirement })}\n\n` +
-        `🔄 ${t('executor.retries_count', { current: totalRetries, max: task.maxRetries })}\n\n` +
-        `📋 ${t('executor.summary_label')}\n${summary}`
+        `🔄 ${t('executor.retries_count', { current: totalRetries, max: task.maxRetries })}`
       );
+
+      // 전체 CLI 출력 (분할 전송)
+      await sendLongMessage(`📋 <b>${t('executor.cli_output_label')}</b>\n<pre>${fullOutput}</pre>`);
       info('Task completed', { taskId: task.id });
     } else {
       // 실패 - 재시도 가능한지 확인
@@ -425,8 +428,8 @@ async function processTask(task, isParallel = false) {
         await sendMessage(`🔄 <b>${t('executor.task_retry', { current: updatedTask.currentRetry, max: task.maxRetries })}</b>${reasonText}`);
       } else {
         // 최종 실패
-        const summary = generateSummary(output, false, reason);
-        await failTask(task.id, summary);
+        const fullOutput = generateSummary(output, false, reason);
+        await failTask(task.id, fullOutput);
         const totalRetries = updatedTask.currentRetry;
 
         console.log('\n' + '-'.repeat(60));
@@ -434,12 +437,15 @@ async function processTask(task, isParallel = false) {
         if (reason) console.log(`${prefix}${t('executor.console_retry_reason', { reason: reason.slice(0, 100) })}`);
         console.log('-'.repeat(60) + '\n');
 
+        // 헤더 메시지
         await sendMessage(
           `❌ <b>${t('executor.task_failed')}</b>\n\n` +
           `📝 ${t('executor.requirement_label', { text: task.requirement })}\n\n` +
-          `🔄 ${t('executor.retries_after_fail', { current: totalRetries, max: task.maxRetries })}\n\n` +
-          `📋 ${t('executor.summary_label')}\n${summary}`
+          `🔄 ${t('executor.retries_after_fail', { current: totalRetries, max: task.maxRetries })}`
         );
+
+        // 전체 CLI 출력 (분할 전송)
+        await sendLongMessage(`📋 <b>${t('executor.cli_output_label')}</b>\n<pre>${fullOutput}</pre>`);
         info('Task failed', { taskId: task.id, reason });
       }
     }

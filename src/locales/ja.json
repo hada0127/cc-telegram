@@ -154,6 +154,8 @@
     "unknown_error": "不明なエラー",
     "task_done": "タスク完了。{output}",
     "task_fail_summary": "タスク失敗。\n失敗理由: {reason}\n{output}",
+    "cli_output_label": "CLI出力:",
+    "failure_reason_prefix": "失敗理由: {reason}",
     "task_crash": "実行中にエラーが発生: {error}",
     "task_crashed": "タスク実行中にクラッシュ",
     "crash_reason": "エラー: {error}"

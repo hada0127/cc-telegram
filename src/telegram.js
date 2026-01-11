@@ -163,6 +163,62 @@ export async function sendMessage(text, options = {}) {
 }
 
 /**
+ * 긴 메시지 분할 전송 (텔레그램 4096자 제한)
+ * @param {string} text
+ * @param {object} [options]
+ */
+export async function sendLongMessage(text, options = {}) {
+  const MAX_LENGTH = 4000; // 안전 마진 확보
+
+  if (text.length <= MAX_LENGTH) {
+    return await sendMessage(text, options);
+  }
+
+  // 줄 단위로 분할
+  const lines = text.split('\n');
+  let currentChunk = '';
+  let chunkIndex = 1;
+  const chunks = [];
+
+  for (const line of lines) {
+    // 현재 청크 + 새 줄이 제한을 초과하면 청크 저장
+    if (currentChunk.length + line.length + 1 > MAX_LENGTH) {
+      if (currentChunk) {
+        chunks.push(currentChunk);
+      }
+      currentChunk = line;
+    } else {
+      currentChunk = currentChunk ? currentChunk + '\n' + line : line;
+    }
+  }
+
+  // 마지막 청크 추가
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+
+  // 각 청크 전송
+  let success = true;
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    const isLast = i === chunks.length - 1;
+    const prefix = chunks.length > 1 ? `[${i + 1}/${chunks.length}]\n` : '';
+
+    // 마지막 청크에만 options(reply_markup 등) 적용
+    const chunkOptions = isLast ? options : {};
+    const result = await sendMessage(prefix + chunk, chunkOptions);
+    if (!result) success = false;
+
+    // 연속 전송 시 약간의 딜레이
+    if (!isLast) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+
+  return success;
+}
+
+/**
  * 봇 명령어 설정 (자동완성용)
  */
 /* istanbul ignore next */

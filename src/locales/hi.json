@@ -154,6 +154,8 @@
     "unknown_error": "अज्ञात त्रुटि",
     "task_done": "कार्य पूर्ण। {output}",
     "task_fail_summary": "कार्य विफल।\nविफलता कारण: {reason}\n{output}",
+    "cli_output_label": "CLI आउटपुट:",
+    "failure_reason_prefix": "विफलता कारण: {reason}",
     "task_crash": "निष्पादन के दौरान त्रुटि: {error}",
     "task_crashed": "कार्य निष्पादन के दौरान क्रैश हो गया",
     "crash_reason": "त्रुटि: {error}"

@@ -154,6 +154,8 @@
     "unknown_error": "Error desconocido",
     "task_done": "Tarea completada. {output}",
     "task_fail_summary": "Tarea fallida.\nRazón del fallo: {reason}\n{output}",
+    "cli_output_label": "Salida CLI:",
+    "failure_reason_prefix": "Razón del fallo: {reason}",
     "task_crash": "Error durante la ejecución: {error}",
     "task_crashed": "La tarea se bloqueó durante la ejecución",
     "crash_reason": "Error: {error}"
