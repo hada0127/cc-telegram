@@ -153,7 +153,10 @@
     "exit_code_error": "प्रक्रिया निकास कोड: {code}",
     "unknown_error": "अज्ञात त्रुटि",
     "task_done": "कार्य पूर्ण। {output}",
-    "task_fail_summary": "कार्य विफल।\nविफलता कारण: {reason}\n{output}"
+    "task_fail_summary": "कार्य विफल।\nविफलता कारण: {reason}\n{output}",
+    "task_crash": "निष्पादन के दौरान त्रुटि: {error}",
+    "task_crashed": "कार्य निष्पादन के दौरान क्रैश हो गया",
+    "crash_reason": "त्रुटि: {error}"
   },
   "tasks": {
     "cancelled_by_user": "उपयोगकर्ता द्वारा रद्द"

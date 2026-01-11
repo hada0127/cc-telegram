@@ -153,7 +153,10 @@
     "exit_code_error": "进程退出代码：{code}",
     "unknown_error": "未知错误",
     "task_done": "任务完成。{output}",
-    "task_fail_summary": "任务失败。\n失败原因：{reason}\n{output}"
+    "task_fail_summary": "任务失败。\n失败原因：{reason}\n{output}",
+    "task_crash": "执行过程中发生错误：{error}",
+    "task_crashed": "任务执行过程中崩溃",
+    "crash_reason": "错误：{error}"
   },
   "tasks": {
     "cancelled_by_user": "被用户取消"

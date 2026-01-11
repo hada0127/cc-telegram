@@ -803,3 +803,71 @@ describe('executionLoop 로직 시뮬레이션', () => {
     expect(message).toContain('일시적 오류');
   });
 });
+
+describe('processTask 예외 처리 안전장치', () => {
+  test('예외 발생 시 크래시 메시지가 올바른 형식이어야 함', () => {
+    const err = new Error('프로세스 실행 실패');
+    const task = { requirement: '테스트 작업', id: 'test-task-123' };
+
+    // 예외 발생 시 생성되는 에러 요약
+    const errorSummary = i18nModule.t('executor.task_crash', {
+      error: executorModule.escapeHtml(err.message || 'Unknown error')
+    });
+
+    expect(errorSummary).toContain('프로세스 실행 실패');
+  });
+
+  test('예외 발생 시 알림 메시지가 올바른 형식이어야 함', () => {
+    const err = new Error('연결 시간 초과');
+    const task = { requirement: '테스트 작업', id: 'test-task-123' };
+
+    const message =
+      `❌ <b>${i18nModule.t('executor.task_crashed')}</b>\n\n` +
+      `📝 ${i18nModule.t('executor.requirement_label', { text: task.requirement.slice(0, 100) })}\n\n` +
+      `⚠️ ${i18nModule.t('executor.crash_reason', { error: executorModule.escapeHtml(err.message || 'Unknown error') })}`;
+
+    expect(message).toContain('작업 실행 중 오류 발생');
+    expect(message).toContain('테스트 작업');
+    expect(message).toContain('연결 시간 초과');
+  });
+
+  test('HTML 특수문자가 포함된 에러 메시지도 안전하게 이스케이프해야 함', () => {
+    const err = new Error('Error: <script>alert("xss")</script>');
+
+    const escapedError = executorModule.escapeHtml(err.message);
+    expect(escapedError).not.toContain('<script>');
+    expect(escapedError).toContain('&lt;script&gt;');
+  });
+
+  test('Unknown error가 올바르게 처리되어야 함', () => {
+    const err = new Error('');
+
+    const errorMessage = err.message || 'Unknown error';
+    expect(errorMessage).toBe('Unknown error');
+  });
+
+  test('undefined message가 올바르게 처리되어야 함', () => {
+    const err = {};
+
+    const errorMessage = err.message || 'Unknown error';
+    expect(errorMessage).toBe('Unknown error');
+  });
+
+  test('task_crash 번역 키가 존재해야 함', () => {
+    const translation = i18nModule.t('executor.task_crash', { error: 'test error' });
+    // 번역이 없으면 키 자체를 반환하므로 키가 반환되지 않아야 함
+    expect(translation).not.toBe('executor.task_crash');
+    expect(translation).toContain('test error');
+  });
+
+  test('task_crashed 번역 키가 존재해야 함', () => {
+    const translation = i18nModule.t('executor.task_crashed');
+    expect(translation).not.toBe('executor.task_crashed');
+  });
+
+  test('crash_reason 번역 키가 존재해야 함', () => {
+    const translation = i18nModule.t('executor.crash_reason', { error: 'test error' });
+    expect(translation).not.toBe('executor.crash_reason');
+    expect(translation).toContain('test error');
+  });
+});

@@ -444,7 +444,24 @@ async function processTask(task, isParallel = false) {
       }
     }
   } catch (err) {
-    error('Task processing error', { taskId: task.id, error: err.message });
+    // 안전장치: 예외 발생 시에도 cc-telegram이 종료되지 않도록 함
+    error('Task processing error', { taskId: task.id, error: err.message, stack: err.stack });
+
+    try {
+      // 작업을 실패 상태로 변경
+      const errorSummary = t('executor.task_crash', { error: escapeHtml(err.message || 'Unknown error') });
+      await failTask(task.id, errorSummary);
+
+      // 사용자에게 알림
+      await sendMessage(
+        `❌ <b>${t('executor.task_crashed')}</b>\n\n` +
+        `📝 ${t('executor.requirement_label', { text: task.requirement.slice(0, 100) })}\n\n` +
+        `⚠️ ${t('executor.crash_reason', { error: escapeHtml(err.message || 'Unknown error') })}`
+      );
+    } catch (innerErr) {
+      // 실패 처리 중 오류도 무시 (cc-telegram 보호)
+      error('Failed to handle task error', { taskId: task.id, innerError: innerErr.message });
+    }
   } finally {
     runningTasks.delete(task.id);
   }

@@ -153,7 +153,10 @@
     "exit_code_error": "Prozess-Exit-Code: {code}",
     "unknown_error": "Unbekannter Fehler",
     "task_done": "Aufgabe abgeschlossen. {output}",
-    "task_fail_summary": "Aufgabe fehlgeschlagen.\nFehlergrund: {reason}\n{output}"
+    "task_fail_summary": "Aufgabe fehlgeschlagen.\nFehlergrund: {reason}\n{output}",
+    "task_crash": "Fehler während der Ausführung: {error}",
+    "task_crashed": "Aufgabe während der Ausführung abgestürzt",
+    "crash_reason": "Fehler: {error}"
   },
   "tasks": {
     "cancelled_by_user": "Vom Benutzer abgebrochen"

@@ -153,7 +153,10 @@
     "exit_code_error": "Process exit code: {code}",
     "unknown_error": "Unknown error",
     "task_done": "Task complete. {output}",
-    "task_fail_summary": "Task failed.\nFailure reason: {reason}\n{output}"
+    "task_fail_summary": "Task failed.\nFailure reason: {reason}\n{output}",
+    "task_crash": "Error during execution: {error}",
+    "task_crashed": "Task crashed during execution",
+    "crash_reason": "Error: {error}"
   },
   "tasks": {
     "cancelled_by_user": "Cancelled by user"

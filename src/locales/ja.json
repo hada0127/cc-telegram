@@ -153,7 +153,10 @@
     "exit_code_error": "プロセス終了コード: {code}",
     "unknown_error": "不明なエラー",
     "task_done": "タスク完了。{output}",
-    "task_fail_summary": "タスク失敗。\n失敗理由: {reason}\n{output}"
+    "task_fail_summary": "タスク失敗。\n失敗理由: {reason}\n{output}",
+    "task_crash": "実行中にエラーが発生: {error}",
+    "task_crashed": "タスク実行中にクラッシュ",
+    "crash_reason": "エラー: {error}"
   },
   "tasks": {
     "cancelled_by_user": "ユーザーによりキャンセル"
