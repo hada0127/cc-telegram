@@ -16,7 +16,7 @@ import {
   PRIORITY,
   failTask
 } from './tasks.js';
-import { cancelRunningTask, isTaskRunning } from './executor.js';
+import { cancelRunningTask, isTaskRunning, escapeHtml } from './executor.js';
 import { info, error, debug } from './utils/logger.js';
 import { t, getCurrentLanguage } from './i18n.js';
 
@@ -332,7 +332,7 @@ async function handleStatus() {
       if (outputs && outputs.length > 0) {
         const shortId = task.id.slice(-8);
         text += `\n[${shortId}]\n<code>`;
-        text += outputs.slice(-3).join('\n');
+        text += escapeHtml(outputs.slice(-3).join('\n'));
         text += '</code>\n';
       }
     }
