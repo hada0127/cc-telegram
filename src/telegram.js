@@ -157,6 +157,27 @@ export async function sendMessage(text, options = {}) {
     });
     return true;
   } catch (err) {
+    // HTML 파싱 오류 시 plain text로 재시도
+    if (err.message && err.message.includes("can't parse entities")) {
+      debug('HTML parse error, retrying without parse_mode', err.message);
+      try {
+        // HTML 태그 제거하고 plain text로 전송
+        const plainText = text
+          .replace(/<[^>]*>/g, '') // 모든 HTML 태그 제거
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&amp;/g, '&');
+        await callApi('sendMessage', {
+          chat_id: config.chatId,
+          text: plainText,
+          ...options
+        });
+        return true;
+      } catch (retryErr) {
+        error('Message send failed (retry)', retryErr.message);
+        return false;
+      }
+    }
     error('Message send failed', err.message);
     return false;
   }
@@ -164,6 +185,7 @@ export async function sendMessage(text, options = {}) {
 
 /**
  * 긴 메시지 분할 전송 (텔레그램 4096자 제한)
+ * HTML 태그(<pre>, <b>, <code> 등)가 청크 경계에서 끊어지지 않도록 처리
  * @param {string} text
  * @param {object} [options]
  */
@@ -174,27 +196,58 @@ export async function sendLongMessage(text, options = {}) {
     return await sendMessage(text, options);
   }
 
-  // 줄 단위로 분할
-  const lines = text.split('\n');
-  let currentChunk = '';
-  let chunkIndex = 1;
+  // <pre> 태그 내부인지 확인하고 분할하는 함수
+  // <pre>...</pre> 블록을 보존하면서 분할
   const chunks = [];
+  let remaining = text;
 
-  for (const line of lines) {
-    // 현재 청크 + 새 줄이 제한을 초과하면 청크 저장
-    if (currentChunk.length + line.length + 1 > MAX_LENGTH) {
-      if (currentChunk) {
-        chunks.push(currentChunk);
-      }
-      currentChunk = line;
-    } else {
-      currentChunk = currentChunk ? currentChunk + '\n' + line : line;
+  while (remaining.length > 0) {
+    if (remaining.length <= MAX_LENGTH) {
+      chunks.push(remaining);
+      break;
     }
-  }
 
-  // 마지막 청크 추가
-  if (currentChunk) {
-    chunks.push(currentChunk);
+    // MAX_LENGTH 지점에서 안전한 분할 위치 찾기
+    let splitPos = MAX_LENGTH;
+
+    // 1. 줄바꿈 위치에서 분할 시도
+    const lastNewline = remaining.lastIndexOf('\n', MAX_LENGTH);
+    if (lastNewline > MAX_LENGTH * 0.5) {
+      splitPos = lastNewline;
+    }
+
+    // 2. <pre> 태그 열림/닫힘 체크
+    const chunk = remaining.slice(0, splitPos);
+    const preOpenCount = (chunk.match(/<pre>/gi) || []).length;
+    const preCloseCount = (chunk.match(/<\/pre>/gi) || []).length;
+
+    // <pre> 태그가 열려있으면 닫아주고, 다음 청크에서 다시 열기
+    let finalChunk = chunk;
+    let nextPrefix = '';
+
+    if (preOpenCount > preCloseCount) {
+      // 열린 <pre> 태그가 있음 -> 이 청크 끝에 </pre> 추가
+      finalChunk = chunk + '</pre>';
+      nextPrefix = '<pre>';
+    }
+
+    // <b>, <code> 태그도 체크
+    const bOpenCount = (chunk.match(/<b>/gi) || []).length;
+    const bCloseCount = (chunk.match(/<\/b>/gi) || []).length;
+    if (bOpenCount > bCloseCount) {
+      finalChunk = finalChunk.replace(/<\/pre>$/, '') + '</b>' + (finalChunk.endsWith('</pre>') ? '</pre>' : '');
+      nextPrefix = '<b>' + nextPrefix;
+    }
+
+    const codeOpenCount = (chunk.match(/<code>/gi) || []).length;
+    const codeCloseCount = (chunk.match(/<\/code>/gi) || []).length;
+    if (codeOpenCount > codeCloseCount) {
+      finalChunk = finalChunk + '</code>';
+      nextPrefix = '<code>' + nextPrefix;
+    }
+
+    chunks.push(finalChunk);
+    remaining = nextPrefix + remaining.slice(splitPos).trimStart();
   }
 
   // 각 청크 전송

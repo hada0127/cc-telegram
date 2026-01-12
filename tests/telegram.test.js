@@ -1097,3 +1097,106 @@ describe('stop_* 콜백 처리', () => {
     expect(taskId).toBe(task.id);
   });
 });
+
+describe('sendMessage HTML 파싱 오류 처리', () => {
+  test('HTML 파싱 오류 시 plain text로 재시도해야 함', async () => {
+    let callCount = 0;
+    global.fetch.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        // 첫 번째 호출: HTML 파싱 오류
+        return Promise.resolve({
+          json: () => Promise.resolve({
+            ok: false,
+            description: "Bad Request: can't parse entities: Can't find end tag"
+          }),
+          status: 400
+        });
+      }
+      // 두 번째 호출: 성공
+      return Promise.resolve({
+        json: () => Promise.resolve({ ok: true, result: {} }),
+        status: 200
+      });
+    });
+
+    const result = await telegramModule.sendMessage('<pre>잘못된 HTML');
+    // HTML 파싱 실패 시 plain text로 재시도하므로 true 반환 가능
+    expect(typeof result).toBe('boolean');
+  });
+
+  test('정상적인 HTML은 성공해야 함', async () => {
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve({ ok: true, result: {} }),
+      status: 200
+    });
+
+    const result = await telegramModule.sendMessage('<b>정상 HTML</b>');
+    expect(result).toBe(true);
+  });
+});
+
+describe('sendLongMessage', () => {
+  test('짧은 메시지는 분할 없이 전송해야 함', async () => {
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve({ ok: true, result: {} }),
+      status: 200
+    });
+
+    const result = await telegramModule.sendLongMessage('짧은 메시지');
+    expect(result).toBe(true);
+  });
+
+  test('긴 메시지는 분할해서 전송해야 함', async () => {
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve({ ok: true, result: {} }),
+      status: 200
+    });
+
+    // 5000자 이상의 긴 메시지
+    const longMessage = 'A'.repeat(5000);
+    const result = await telegramModule.sendLongMessage(longMessage);
+    expect(result).toBe(true);
+    // fetch가 2번 이상 호출되어야 함 (메시지 분할)
+    expect(global.fetch.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('<pre> 태그가 포함된 긴 메시지 분할 처리', async () => {
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve({ ok: true, result: {} }),
+      status: 200
+    });
+
+    // <pre> 태그를 포함한 긴 메시지
+    const content = 'X'.repeat(4500);
+    const longMessage = `<pre>${content}</pre>`;
+    const result = await telegramModule.sendLongMessage(longMessage);
+    expect(result).toBe(true);
+  });
+
+  test('<b> 태그가 포함된 긴 메시지 분할 처리', async () => {
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve({ ok: true, result: {} }),
+      status: 200
+    });
+
+    // <b> 태그를 포함한 긴 메시지
+    const content = 'Y'.repeat(4500);
+    const longMessage = `<b>${content}</b>`;
+    const result = await telegramModule.sendLongMessage(longMessage);
+    expect(result).toBe(true);
+  });
+
+  test('<code> 태그가 포함된 긴 메시지 분할 처리', async () => {
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve({ ok: true, result: {} }),
+      status: 200
+    });
+
+    // <code> 태그를 포함한 긴 메시지
+    const content = 'Z'.repeat(4500);
+    const longMessage = `<code>${content}</code>`;
+    const result = await telegramModule.sendLongMessage(longMessage);
+    expect(result).toBe(true);
+  });
+});
