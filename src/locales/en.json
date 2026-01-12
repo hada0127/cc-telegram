@@ -158,7 +158,8 @@
     "failure_reason_prefix": "Failure reason: {reason}",
     "task_crash": "Error during execution: {error}",
     "task_crashed": "Task crashed during execution",
-    "crash_reason": "Error: {error}"
+    "crash_reason": "Error: {error}",
+    "no_completion_signal": "No completion signal (COMPLETE/FAILED signal required for repeated tasks)"
   },
   "tasks": {
     "cancelled_by_user": "Cancelled by user"

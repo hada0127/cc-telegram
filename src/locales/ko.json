@@ -158,7 +158,8 @@
     "failure_reason_prefix": "실패 원인: {reason}",
     "task_crash": "실행 중 오류 발생: {error}",
     "task_crashed": "작업 실행 중 오류 발생",
-    "crash_reason": "오류: {error}"
+    "crash_reason": "오류: {error}",
+    "no_completion_signal": "완료 신호가 없습니다 (반복 작업은 COMPLETE/FAILED 신호 필수)"
   },
   "tasks": {
     "cancelled_by_user": "사용자에 의해 취소됨"

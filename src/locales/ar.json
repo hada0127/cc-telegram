@@ -158,7 +158,8 @@
     "failure_reason_prefix": "سبب الفشل: {reason}",
     "task_crash": "خطأ أثناء التنفيذ: {error}",
     "task_crashed": "تعطلت المهمة أثناء التنفيذ",
-    "crash_reason": "خطأ: {error}"
+    "crash_reason": "خطأ: {error}",
+    "no_completion_signal": "لا توجد إشارة إتمام (إشارة COMPLETE/FAILED مطلوبة للمهام المتكررة)"
   },
   "tasks": {
     "cancelled_by_user": "ألغاه المستخدم"

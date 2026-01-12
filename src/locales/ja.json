@@ -158,7 +158,8 @@
     "failure_reason_prefix": "失敗理由: {reason}",
     "task_crash": "実行中にエラーが発生: {error}",
     "task_crashed": "タスク実行中にクラッシュ",
-    "crash_reason": "エラー: {error}"
+    "crash_reason": "エラー: {error}",
+    "no_completion_signal": "完了シグナルがありません（繰り返しタスクにはCOMPLETE/FAILEDシグナルが必須）"
   },
   "tasks": {
     "cancelled_by_user": "ユーザーによりキャンセル"

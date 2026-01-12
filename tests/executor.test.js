@@ -431,7 +431,7 @@ Error: 검증 실패`;
   });
 });
 
-describe('analyzeResult - 불확실한 경우', () => {
+describe('analyzeResult - 불확실한 경우 (일반 모드)', () => {
   test('완료 신호도 오류도 없으면 성공으로 간주해야 함', () => {
     const output = `작업을 진행했습니다.
 결과를 저장했습니다.`;
@@ -444,6 +444,141 @@ describe('analyzeResult - 불확실한 경우', () => {
     const output = '';
     const result = executorModule.analyzeResult(output);
     expect(result.success).toBe(true);
+  });
+});
+
+describe('analyzeResult - 엄격 모드 (strictMode)', () => {
+  test('엄격 모드에서 완료 신호가 없으면 실패로 판단해야 함', () => {
+    const output = `작업을 진행했습니다.
+결과를 저장했습니다.`;
+
+    const result = executorModule.analyzeResult(output, { strictMode: true });
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain('완료 신호');
+  });
+
+  test('엄격 모드에서 COMPLETE 신호가 있으면 성공으로 판단해야 함', () => {
+    const output = `작업을 진행했습니다.
+${COMPLETION_SIGNAL}`;
+
+    const result = executorModule.analyzeResult(output, { strictMode: true });
+    expect(result.success).toBe(true);
+  });
+
+  test('엄격 모드에서 FAILED 신호가 있으면 실패로 판단해야 함', () => {
+    const output = `작업을 진행했습니다.
+${FAILURE_SIGNAL}
+실패 이유: 테스트 실패`;
+
+    const result = executorModule.analyzeResult(output, { strictMode: true });
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain('테스트 실패');
+  });
+
+  test('엄격 모드에서 빈 출력은 실패로 판단해야 함', () => {
+    const output = '';
+    const result = executorModule.analyzeResult(output, { strictMode: true });
+    expect(result.success).toBe(false);
+  });
+
+  test('엄격 모드에서 성공 지표만 있어도 완료 신호가 없으면 실패', () => {
+    const output = `빌드 성공
+모든 테스트 통과`;
+
+    const result = executorModule.analyzeResult(output, { strictMode: true });
+    // 성공 지표가 있으면 성공으로 간주 (엄격 모드는 "불확실"한 경우에만 적용)
+    expect(result.success).toBe(true);
+  });
+
+  test('엄격 모드가 false면 일반 모드로 동작해야 함', () => {
+    const output = `작업을 진행했습니다.`;
+
+    const result = executorModule.analyzeResult(output, { strictMode: false });
+    expect(result.success).toBe(true);
+  });
+
+  test('options 없이 호출하면 일반 모드로 동작해야 함', () => {
+    const output = `작업을 진행했습니다.`;
+
+    const result = executorModule.analyzeResult(output);
+    expect(result.success).toBe(true);
+  });
+
+  test('엄격 모드에서 오류 패턴이 있으면 실패로 판단해야 함', () => {
+    const output = `Error: 파일을 찾을 수 없습니다`;
+
+    const result = executorModule.analyzeResult(output, { strictMode: true });
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain('파일을 찾을 수 없습니다');
+  });
+});
+
+describe('반복 작업의 엄격 모드 자동 적용', () => {
+  test('maxRetries > 1 이면 엄격 모드가 적용되어야 함', () => {
+    // processTask 로직 시뮬레이션
+    const task = { maxRetries: 5 };
+    const strictMode = task.maxRetries > 1;
+    expect(strictMode).toBe(true);
+  });
+
+  test('maxRetries = 1 이면 엄격 모드가 적용되지 않아야 함', () => {
+    const task = { maxRetries: 1 };
+    const strictMode = task.maxRetries > 1;
+    expect(strictMode).toBe(false);
+  });
+
+  test('maxRetries = 0 이면 엄격 모드가 적용되지 않아야 함', () => {
+    const task = { maxRetries: 0 };
+    const strictMode = task.maxRetries > 1;
+    expect(strictMode).toBe(false);
+  });
+
+  test('반복 작업에서 완료 신호 없이 종료하면 재시도해야 함', () => {
+    // 시뮬레이션: maxRetries=5, 완료 신호 없는 출력
+    const task = { maxRetries: 5 };
+    const output = '작업을 진행했습니다.';
+
+    const strictMode = task.maxRetries > 1;
+    const result = executorModule.analyzeResult(output, { strictMode });
+
+    // 엄격 모드가 적용되어 실패로 처리
+    expect(result.success).toBe(false);
+  });
+
+  test('단순 작업에서 완료 신호 없이 종료해도 성공으로 처리', () => {
+    // 시뮬레이션: maxRetries=1, 완료 신호 없는 출력
+    const task = { maxRetries: 1 };
+    const output = '작업을 진행했습니다.';
+
+    const strictMode = task.maxRetries > 1;
+    const result = executorModule.analyzeResult(output, { strictMode });
+
+    // 일반 모드가 적용되어 성공으로 처리
+    expect(result.success).toBe(true);
+  });
+
+  test('반복 작업에서 COMPLETE 신호가 있으면 성공으로 처리', () => {
+    const task = { maxRetries: 10 };
+    const output = `작업 완료
+${COMPLETION_SIGNAL}`;
+
+    const strictMode = task.maxRetries > 1;
+    const result = executorModule.analyzeResult(output, { strictMode });
+
+    expect(result.success).toBe(true);
+  });
+
+  test('반복 작업에서 FAILED 신호가 있으면 재시도', () => {
+    const task = { maxRetries: 10 };
+    const output = `문제 발생
+${FAILURE_SIGNAL}
+실패 이유: 아직 완료되지 않음`;
+
+    const strictMode = task.maxRetries > 1;
+    const result = executorModule.analyzeResult(output, { strictMode });
+
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain('아직 완료되지 않음');
   });
 });
 

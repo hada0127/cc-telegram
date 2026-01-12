@@ -158,7 +158,8 @@
     "failure_reason_prefix": "Причина неудачи: {reason}",
     "task_crash": "Ошибка во время выполнения: {error}",
     "task_crashed": "Задача аварийно завершилась во время выполнения",
-    "crash_reason": "Ошибка: {error}"
+    "crash_reason": "Ошибка: {error}",
+    "no_completion_signal": "Нет сигнала завершения (сигнал COMPLETE/FAILED обязателен для повторяющихся задач)"
   },
   "tasks": {
     "cancelled_by_user": "Отменено пользователем"

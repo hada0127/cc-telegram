@@ -158,7 +158,8 @@
     "failure_reason_prefix": "失败原因: {reason}",
     "task_crash": "执行过程中发生错误：{error}",
     "task_crashed": "任务执行过程中崩溃",
-    "crash_reason": "错误：{error}"
+    "crash_reason": "错误：{error}",
+    "no_completion_signal": "没有完成信号（重复任务需要COMPLETE/FAILED信号）"
   },
   "tasks": {
     "cancelled_by_user": "被用户取消"

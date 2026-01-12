@@ -158,7 +158,8 @@
     "failure_reason_prefix": "Raison de l'échec : {reason}",
     "task_crash": "Erreur pendant l'exécution : {error}",
     "task_crashed": "La tâche a planté pendant l'exécution",
-    "crash_reason": "Erreur : {error}"
+    "crash_reason": "Erreur : {error}",
+    "no_completion_signal": "Aucun signal de complétion (signal COMPLETE/FAILED requis pour les tâches répétées)"
   },
   "tasks": {
     "cancelled_by_user": "Annulé par l'utilisateur"

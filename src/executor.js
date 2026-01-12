@@ -213,9 +213,12 @@ ${task.completionCriteria || t('prompt.none')}
 /**
  * 결과 분석 (완료 조건 충족 여부)
  * @param {string} output
+ * @param {object} options
+ * @param {boolean} [options.strictMode=false] - 엄격 모드 (완료 신호 필수)
  * @returns {{success: boolean, reason: string|null}}
  */
-function analyzeResult(output) {
+function analyzeResult(output, options = {}) {
+  const { strictMode = false } = options;
   // 1. 완료 신호 기반 판단 (최우선)
   const hasCompletionSignal = output.includes(COMPLETION_SIGNAL);
   const hasFailureSignal = output.includes(FAILURE_SIGNAL);
@@ -288,7 +291,14 @@ function analyzeResult(output) {
     return { success: true, reason: null };
   }
 
-  // 3. 완료 신호도 없고 명확한 판단이 안되면 불확실 (성공으로 간주하되 경고)
+  // 3. 완료 신호도 없고 명확한 판단이 안되는 경우
+  if (strictMode) {
+    // 엄격 모드: 완료 신호가 없으면 실패로 처리
+    debug('Strict mode: No completion signal - treating as failure');
+    return { success: false, reason: t('executor.no_completion_signal') };
+  }
+
+  // 일반 모드: 불확실하면 성공으로 간주 (하위 호환성)
   debug('No completion signal - uncertain result, assuming success');
   return { success: true, reason: null };
 }
@@ -385,7 +395,9 @@ async function processTask(task, isParallel = false) {
       reason = t('executor.exit_code_error', { code: exitCode });
     } else {
       // 출력 분석
-      const result = analyzeResult(output);
+      // 반복 작업(maxRetries > 1)은 엄격 모드 적용 (완료 신호 필수)
+      const strictMode = task.maxRetries > 1;
+      const result = analyzeResult(output, { strictMode });
       success = result.success;
       reason = result.reason;
     }

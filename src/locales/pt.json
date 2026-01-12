@@ -158,7 +158,8 @@
     "failure_reason_prefix": "Motivo da falha: {reason}",
     "task_crash": "Erro durante a execução: {error}",
     "task_crashed": "A tarefa travou durante a execução",
-    "crash_reason": "Erro: {error}"
+    "crash_reason": "Erro: {error}",
+    "no_completion_signal": "Nenhum sinal de conclusão (sinal COMPLETE/FAILED necessário para tarefas repetidas)"
   },
   "tasks": {
     "cancelled_by_user": "Cancelado pelo usuário"

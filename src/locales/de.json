@@ -158,7 +158,8 @@
     "failure_reason_prefix": "Fehlergrund: {reason}",
     "task_crash": "Fehler während der Ausführung: {error}",
     "task_crashed": "Aufgabe während der Ausführung abgestürzt",
-    "crash_reason": "Fehler: {error}"
+    "crash_reason": "Fehler: {error}",
+    "no_completion_signal": "Kein Abschlusssignal (COMPLETE/FAILED-Signal für wiederholte Aufgaben erforderlich)"
   },
   "tasks": {
     "cancelled_by_user": "Vom Benutzer abgebrochen"

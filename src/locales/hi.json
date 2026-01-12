@@ -158,7 +158,8 @@
     "failure_reason_prefix": "विफलता कारण: {reason}",
     "task_crash": "निष्पादन के दौरान त्रुटि: {error}",
     "task_crashed": "कार्य निष्पादन के दौरान क्रैश हो गया",
-    "crash_reason": "त्रुटि: {error}"
+    "crash_reason": "त्रुटि: {error}",
+    "no_completion_signal": "कोई पूर्णता संकेत नहीं (दोहराए गए कार्यों के लिए COMPLETE/FAILED संकेत आवश्यक)"
   },
   "tasks": {
     "cancelled_by_user": "उपयोगकर्ता द्वारा रद्द"
