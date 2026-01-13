@@ -111,6 +111,8 @@ Para tarefas com critérios de conclusão e tentativa automática:
 5. Selecione o nível de prioridade
 6. Escolha a contagem de tentativas (10 ou personalizado)
 
+**Modo Plan**: Tarefas complexas executam automaticamente o Claude em modo plan (flag `--plan`). Isso permite que o Claude projete uma abordagem de implementação antes de executar, resultando em melhores resultados para requisitos complexos.
+
 ### Anexos de Arquivos
 
 Você pode anexar arquivos ao inserir requisitos ou critérios de conclusão:
