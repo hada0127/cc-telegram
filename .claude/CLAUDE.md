@@ -44,6 +44,19 @@ Claude가 작업 내용에 따라 자동으로 적용하는 스킬들:
 - .claude/skills/*/SKILL.md: 각 스킬 상세 정의
 
 ## 최근 개선 사항
+### 2026-01-13 적용 완료
+1. **복잡 작업 Plan 모드 자동 적용**
+   - 복잡도(complexity) 필드 추가: 'simple' / 'complex'
+   - 복잡 작업(complexity: 'complex') 실행 시 Claude에 `--plan` 옵션 자동 추가
+   - 프롬프트에 plan 모드 지시 추가 (계획 자동 승인, 사용자 입력 대기 안함)
+   - 단순 작업(complexity: 'simple')은 기존 방식 유지
+
+2. **테스트 케이스 추가**
+   - COMPLEXITY 상수 테스트 추가
+   - createTask complexity 파라미터 테스트 추가
+   - buildPrompt plan 모드 지시 테스트 추가
+   - 총 381개 테스트 케이스 (2026-01-13 기준)
+
 ### 2026-01-12 적용 완료
 1. **반복 작업 완료 신호 필수화 (엄격 모드)**
    - 반복 작업(maxRetries > 1)에서 자동으로 엄격 모드 적용

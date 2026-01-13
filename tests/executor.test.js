@@ -691,6 +691,38 @@ describe('buildPrompt', () => {
     expect(prompt).toContain(i18nModule.t('prompt.completion_criteria'));
     expect(prompt).toContain(i18nModule.t('prompt.none'));
   });
+
+  test('복잡 작업일 때 plan 모드 지시가 포함되어야 함', () => {
+    const task = {
+      requirement: '복잡한 작업',
+      completionCriteria: '완료 조건',
+      complexity: 'complex'
+    };
+
+    const prompt = executorModule.buildPrompt(task);
+    expect(prompt).toContain(i18nModule.t('prompt.plan_instruction'));
+  });
+
+  test('단순 작업일 때 plan 모드 지시가 포함되지 않아야 함', () => {
+    const task = {
+      requirement: '단순 작업',
+      completionCriteria: null,
+      complexity: 'simple'
+    };
+
+    const prompt = executorModule.buildPrompt(task);
+    expect(prompt).not.toContain(i18nModule.t('prompt.plan_instruction'));
+  });
+
+  test('complexity가 없으면 plan 모드 지시가 포함되지 않아야 함', () => {
+    const task = {
+      requirement: '기존 작업',
+      completionCriteria: '완료 조건'
+    };
+
+    const prompt = executorModule.buildPrompt(task);
+    expect(prompt).not.toContain(i18nModule.t('prompt.plan_instruction'));
+  });
 });
 
 describe('generateSummary', () => {

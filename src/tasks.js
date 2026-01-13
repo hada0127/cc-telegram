@@ -42,6 +42,16 @@ export const PRIORITY = {
 };
 
 /**
+ * 복잡도 상수
+ * @readonly
+ * @enum {string}
+ */
+export const COMPLEXITY = {
+  SIMPLE: 'simple',
+  COMPLEX: 'complex'
+};
+
+/**
  * @typedef {Object} Task
  * @property {string} id
  * @property {string} requirement
@@ -50,6 +60,7 @@ export const PRIORITY = {
  * @property {number} currentRetry
  * @property {'ready'|'inProgress'} status
  * @property {number} priority - 우선순위 (1: low, 2: normal, 3: high, 4: urgent)
+ * @property {'simple'|'complex'} complexity - 복잡도 (simple: 단순, complex: 복잡)
  * @property {string} createdAt
  * @property {string|null} startedAt
  * @property {string} workingDirectory
@@ -101,9 +112,10 @@ export async function loadFailedIndex() {
  * @param {number} params.maxRetries
  * @param {string} params.workingDirectory
  * @param {number} [params.priority=2] - 우선순위 (1: low, 2: normal, 3: high, 4: urgent)
+ * @param {string} [params.complexity='simple'] - 복잡도 (simple: 단순, complex: 복잡)
  * @returns {Promise<Task>}
  */
-export async function createTask({ requirement, completionCriteria, maxRetries, workingDirectory, priority = PRIORITY.NORMAL }) {
+export async function createTask({ requirement, completionCriteria, maxRetries, workingDirectory, priority = PRIORITY.NORMAL, complexity = COMPLEXITY.SIMPLE }) {
   const id = generateDateBasedId();
   const now = new Date().toISOString();
 
@@ -116,6 +128,7 @@ export async function createTask({ requirement, completionCriteria, maxRetries, 
     currentRetry: 0,
     status: 'ready',
     priority,
+    complexity,
     createdAt: now,
     startedAt: null,
     workingDirectory

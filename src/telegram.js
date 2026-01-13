@@ -16,6 +16,7 @@ import {
   loadTask,
   resetAllData,
   PRIORITY,
+  COMPLEXITY,
   failTask
 } from './tasks.js';
 import { cancelRunningTask, isTaskRunning, escapeHtml } from './executor.js';
@@ -610,7 +611,8 @@ async function finishSimpleTaskCreation(chatId, state) {
     completionCriteria: null, // 완료 조건 없음
     maxRetries: 1, // 반복 없음
     workingDirectory: process.cwd(),
-    priority: PRIORITY.NORMAL
+    priority: PRIORITY.NORMAL,
+    complexity: COMPLEXITY.SIMPLE
   });
 
   // 세션 첨부 파일을 작업 폴더로 이동
@@ -643,7 +645,8 @@ async function finishTaskCreation(chatId, state, retries) {
     completionCriteria: state.criteria,
     maxRetries: retries,
     workingDirectory: process.cwd(),
-    priority: state.priority || PRIORITY.NORMAL
+    priority: state.priority || PRIORITY.NORMAL,
+    complexity: COMPLEXITY.COMPLEX
   });
 
   // 세션 첨부 파일을 작업 폴더로 이동

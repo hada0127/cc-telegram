@@ -179,6 +179,7 @@
     "instruction1": "Complétez l'exigence et respectez les critères d'achèvement.",
     "instruction2": "Vérifiez que les critères d'achèvement sont respectés à la fin.",
     "instruction3": "Expliquez pourquoi si les critères d'achèvement ne peuvent pas être respectés.",
+    "plan_instruction": "Mode plan actif. Une fois votre plan prêt, il sera automatiquement approuvé pour procéder à l'implémentation. N'attendez pas la saisie de l'utilisateur.",
     "signal_title": "Signal d'achèvement (Important !)",
     "signal_complete": "Si tout le travail est terminé et les critères sont respectés, émettez ce signal :",
     "signal_failed": "Si le travail ne peut pas être terminé ou les critères ne sont pas respectés, émettez ce signal avec la raison :",

@@ -41,39 +41,43 @@ function escapeHtml(text) {
 /**
  * Claude 실행 명령어 가져오기
  * config에서 설정된 값이 있으면 사용, 없으면 자동 감지
+ * @param {object} options
+ * @param {boolean} [options.planMode=false] - plan 모드 사용 여부
  * @returns {Promise<{command: string, args: string[], useShell: boolean}>}
  */
 /* istanbul ignore next */
-async function getClaudeCommand() {
-  if (cachedClaudeCommand) return cachedClaudeCommand;
-
+async function getClaudeCommand(options = {}) {
+  const { planMode = false } = options;
   const config = await loadConfig();
+
+  let command, args, useShell;
 
   if (config.claudeCommand) {
     // 사용자 지정 명령어 사용
     const parts = config.claudeCommand.split(' ');
-    const command = parts[0];
-    const args = [...parts.slice(1), '--dangerously-skip-permissions'];
-    cachedClaudeCommand = { command, args, useShell: true };
+    command = parts[0];
+    args = [...parts.slice(1), '--dangerously-skip-permissions'];
+    useShell = true;
   } else {
     // 자동 감지
     const isWindows = process.platform === 'win32';
     if (isWindows) {
-      cachedClaudeCommand = {
-        command: 'claude.cmd',
-        args: ['--dangerously-skip-permissions'],
-        useShell: true
-      };
+      command = 'claude.cmd';
+      args = ['--dangerously-skip-permissions'];
+      useShell = true;
     } else {
-      cachedClaudeCommand = {
-        command: 'claude',
-        args: ['--dangerously-skip-permissions'],
-        useShell: false
-      };
+      command = 'claude';
+      args = ['--dangerously-skip-permissions'];
+      useShell = false;
     }
   }
 
-  return cachedClaudeCommand;
+  // plan 모드일 때 --plan 옵션 추가
+  if (planMode) {
+    args.push('--plan');
+  }
+
+  return { command, args, useShell };
 }
 
 /**
@@ -82,11 +86,14 @@ async function getClaudeCommand() {
  * @param {string} cwd
  * @param {string} taskId - 작업 ID (병렬 실행 시 구분용)
  * @param {boolean} isParallel - 병렬 실행 여부
+ * @param {object} options - 추가 옵션
+ * @param {boolean} [options.planMode=false] - plan 모드 사용 여부
  * @returns {Promise<{exitCode: number, output: string}>}
  */
 /* istanbul ignore next */
-async function runClaude(prompt, cwd, taskId, isParallel = false) {
-  const { command, args, useShell } = await getClaudeCommand();
+async function runClaude(prompt, cwd, taskId, isParallel = false, options = {}) {
+  const { planMode = false } = options;
+  const { command, args, useShell } = await getClaudeCommand({ planMode });
 
   return new Promise((resolve, reject) => {
     const spawnOptions = {
@@ -188,7 +195,9 @@ const FAILURE_SIGNAL = '<promise>FAILED</promise>';
  * @returns {string}
  */
 function buildPrompt(task) {
-  return `# ${t('prompt.title')}
+  const isComplex = task.complexity === 'complex';
+
+  let prompt = `# ${t('prompt.title')}
 
 ## ${t('prompt.requirement')}
 ${task.requirement}
@@ -199,7 +208,14 @@ ${task.completionCriteria || t('prompt.none')}
 ## ${t('prompt.instructions_title')}
 - ${t('prompt.instruction1')}
 - ${t('prompt.instruction2')}
-- ${t('prompt.instruction3')}
+- ${t('prompt.instruction3')}`;
+
+  // 복잡 작업일 때 plan 모드 관련 지시 추가
+  if (isComplex) {
+    prompt += `\n- ${t('prompt.plan_instruction')}`;
+  }
+
+  prompt += `
 
 ## ${t('prompt.signal_title')}
 - ${t('prompt.signal_complete')}
@@ -208,6 +224,8 @@ ${task.completionCriteria || t('prompt.none')}
   ${FAILURE_SIGNAL}
   ${t('prompt.failure_reason')}
 `;
+
+  return prompt;
 }
 
 /**
@@ -384,7 +402,9 @@ async function processTask(task, isParallel = false) {
     // 작업 실행
     const prompt = buildPrompt(task);
     clearClaudeOutput(task.id);
-    const { exitCode, output } = await runClaude(prompt, task.workingDirectory, task.id, isParallel);
+    // 복잡 작업(complexity: 'complex')일 때 plan 모드 사용
+    const usePlanMode = task.complexity === 'complex';
+    const { exitCode, output } = await runClaude(prompt, task.workingDirectory, task.id, isParallel, { planMode: usePlanMode });
 
     let success = false;
     let reason = null;

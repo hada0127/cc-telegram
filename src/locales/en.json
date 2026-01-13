@@ -179,6 +179,7 @@
     "instruction1": "Complete the requirement and meet the completion criteria.",
     "instruction2": "Verify that completion criteria are met when finished.",
     "instruction3": "Explain why if completion criteria cannot be met.",
+    "plan_instruction": "Plan mode is active. Once your plan is ready, it will be auto-approved to proceed with implementation. Do not wait for user input.",
     "signal_title": "Completion Signal (Important!)",
     "signal_complete": "If all work is complete and criteria are met, output this signal:",
     "signal_failed": "If work cannot be completed or criteria are not met, output this signal with reason:",

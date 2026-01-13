@@ -69,6 +69,13 @@ describe('PRIORITY 상수', () => {
   });
 });
 
+describe('COMPLEXITY 상수', () => {
+  test('올바른 복잡도 값을 가져야 함', () => {
+    expect(tasksModule.COMPLEXITY.SIMPLE).toBe('simple');
+    expect(tasksModule.COMPLEXITY.COMPLEX).toBe('complex');
+  });
+});
+
 describe('createTask', () => {
   test('기본 우선순위로 작업을 생성해야 함', async () => {
     const task = await tasksModule.createTask({
@@ -98,6 +105,29 @@ describe('createTask', () => {
     });
 
     expect(task.priority).toBe(tasksModule.PRIORITY.URGENT);
+  });
+
+  test('기본 복잡도는 simple이어야 함', async () => {
+    const task = await tasksModule.createTask({
+      requirement: '기본 작업',
+      completionCriteria: '완료 조건',
+      maxRetries: 1,
+      workingDirectory: testDir
+    });
+
+    expect(task.complexity).toBe(tasksModule.COMPLEXITY.SIMPLE);
+  });
+
+  test('지정된 복잡도로 작업을 생성해야 함', async () => {
+    const task = await tasksModule.createTask({
+      requirement: '복잡한 작업',
+      completionCriteria: '완료 조건',
+      maxRetries: 5,
+      workingDirectory: testDir,
+      complexity: tasksModule.COMPLEXITY.COMPLEX
+    });
+
+    expect(task.complexity).toBe(tasksModule.COMPLEXITY.COMPLEX);
   });
 
   test('작업 파일이 생성되어야 함', async () => {

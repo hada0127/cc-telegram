@@ -179,6 +179,7 @@
     "instruction1": "Erfüllen Sie die Anforderung und die Abschlusskriterien.",
     "instruction2": "Überprüfen Sie nach Abschluss, ob die Abschlusskriterien erfüllt sind.",
     "instruction3": "Erklären Sie den Grund, wenn die Abschlusskriterien nicht erfüllt werden können.",
+    "plan_instruction": "Planmodus ist aktiv. Sobald Ihr Plan fertig ist, wird er automatisch genehmigt und die Implementierung fortgesetzt. Warten Sie nicht auf Benutzereingaben.",
     "signal_title": "Abschlusssignal (Wichtig!)",
     "signal_complete": "Wenn alle Arbeiten abgeschlossen sind und die Kriterien erfüllt sind, geben Sie dieses Signal aus:",
     "signal_failed": "Wenn die Arbeit nicht abgeschlossen werden kann oder die Kriterien nicht erfüllt sind, geben Sie dieses Signal mit dem Grund aus:",
