@@ -8,6 +8,8 @@
 
 **GitHub**: [https://github.com/hada0127/cc-telegram](https://github.com/hada0127/cc-telegram)
 
+**[Version History](VERSION_HISTORY.md)**
+
 ---
 
 टेलीग्राम बॉट के माध्यम से रिमोट Claude Code निष्पादन।

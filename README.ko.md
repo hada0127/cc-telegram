@@ -8,6 +8,8 @@
 
 **GitHub**: [https://github.com/hada0127/cc-telegram](https://github.com/hada0127/cc-telegram)
 
+**[Version History](VERSION_HISTORY.md)**
+
 ---
 
 텔레그램 봇을 통한 원격 Claude Code 실행

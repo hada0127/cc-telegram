@@ -8,6 +8,8 @@
 
 **GitHub**: [https://github.com/hada0127/cc-telegram](https://github.com/hada0127/cc-telegram)
 
+**[Version History](VERSION_HISTORY.md)**
+
 ---
 
 通过 Telegram 机器人远程执行 Claude Code
