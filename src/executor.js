@@ -72,9 +72,9 @@ async function getClaudeCommand(options = {}) {
     }
   }
 
-  // plan 모드일 때 --plan 옵션 추가
+  // plan 모드일 때 --permission-mode plan 옵션 추가
   if (planMode) {
-    args.push('--plan');
+    args.push('--permission-mode', 'plan');
   }
 
   return { command, args, useShell };
