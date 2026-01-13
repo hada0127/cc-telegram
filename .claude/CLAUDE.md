@@ -47,7 +47,7 @@ Claude가 작업 내용에 따라 자동으로 적용하는 스킬들:
 ### 2026-01-13 적용 완료
 1. **복잡 작업 Plan 모드 자동 적용**
    - 복잡도(complexity) 필드 추가: 'simple' / 'complex'
-   - 복잡 작업(complexity: 'complex') 실행 시 Claude에 `--plan` 옵션 자동 추가
+   - 복잡 작업(complexity: 'complex') 실행 시 Claude에 `--permission-mode plan` 옵션 자동 추가
    - 프롬프트에 plan 모드 지시 추가 (계획 자동 승인, 사용자 입력 대기 안함)
    - 단순 작업(complexity: 'simple')은 기존 방식 유지
 
