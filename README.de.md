@@ -111,7 +111,7 @@ Für Aufgaben mit Abschlusskriterien und automatischer Wiederholung:
 5. Wählen Sie die Prioritätsstufe
 6. Wählen Sie die Anzahl der Wiederholungen (10 oder benutzerdefiniert)
 
-**Plan-Modus**: Komplexe Aufgaben führen Claude automatisch im Plan-Modus (`--plan` Flag) aus. Dies ermöglicht Claude, vor der Ausführung einen Implementierungsansatz zu entwerfen, was zu besseren Ergebnissen bei komplexen Anforderungen führt.
+**Plan-Modus**: Komplexe Aufgaben führen Claude automatisch im Plan-Modus (`--permission-mode plan` Option) aus. Dies ermöglicht Claude, vor der Ausführung einen Implementierungsansatz zu entwerfen, was zu besseren Ergebnissen bei komplexen Anforderungen führt.
 
 ### Dateianhänge
 

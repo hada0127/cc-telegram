@@ -56,25 +56,35 @@ async function getClaudeCommand(options = {}) {
     // 사용자 지정 명령어 사용
     const parts = config.claudeCommand.split(' ');
     command = parts[0];
-    args = [...parts.slice(1), '--dangerously-skip-permissions'];
+    // plan 모드일 때는 --permission-mode plan 사용, 아니면 --dangerously-skip-permissions 사용
+    if (planMode) {
+      args = [...parts.slice(1), '--permission-mode', 'plan'];
+    } else {
+      args = [...parts.slice(1), '--dangerously-skip-permissions'];
+    }
     useShell = true;
   } else {
     // 자동 감지
     const isWindows = process.platform === 'win32';
     if (isWindows) {
       command = 'claude.cmd';
-      args = ['--dangerously-skip-permissions'];
+      // plan 모드일 때는 --permission-mode plan 사용, 아니면 --dangerously-skip-permissions 사용
+      if (planMode) {
+        args = ['--permission-mode', 'plan'];
+      } else {
+        args = ['--dangerously-skip-permissions'];
+      }
       useShell = true;
     } else {
       command = 'claude';
-      args = ['--dangerously-skip-permissions'];
+      // plan 모드일 때는 --permission-mode plan 사용, 아니면 --dangerously-skip-permissions 사용
+      if (planMode) {
+        args = ['--permission-mode', 'plan'];
+      } else {
+        args = ['--dangerously-skip-permissions'];
+      }
       useShell = false;
     }
-  }
-
-  // plan 모드일 때 --permission-mode plan 옵션 추가
-  if (planMode) {
-    args.push('--permission-mode', 'plan');
   }
 
   return { command, args, useShell };

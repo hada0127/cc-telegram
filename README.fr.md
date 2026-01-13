@@ -111,7 +111,7 @@ Pour les tâches avec critères de complétion et réessai automatique :
 5. Sélectionnez le niveau de priorité
 6. Choisissez le nombre de réessais (10 ou personnalisé)
 
-**Mode Plan** : Les tâches complexes exécutent automatiquement Claude en mode plan (drapeau `--plan`). Cela permet à Claude de concevoir une approche d'implémentation avant l'exécution, ce qui donne de meilleurs résultats pour les exigences complexes.
+**Mode Plan** : Les tâches complexes exécutent automatiquement Claude en mode plan (option `--permission-mode plan`). Cela permet à Claude de concevoir une approche d'implémentation avant l'exécution, ce qui donne de meilleurs résultats pour les exigences complexes.
 
 ### Pièces Jointes
 

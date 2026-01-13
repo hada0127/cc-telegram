@@ -111,7 +111,7 @@ Para tareas con criterios de finalización y reintento automático:
 5. Selecciona el nivel de prioridad
 6. Elige el número de reintentos (10 o personalizado)
 
-**Modo Plan**: Las tareas complejas ejecutan Claude automáticamente en modo plan (bandera `--plan`). Esto permite que Claude diseñe un enfoque de implementación antes de ejecutar, resultando en mejores resultados para requerimientos complejos.
+**Modo Plan**: Las tareas complejas ejecutan Claude automáticamente en modo plan (opción `--permission-mode plan`). Esto permite que Claude diseñe un enfoque de implementación antes de ejecutar, resultando en mejores resultados para requerimientos complejos.
 
 ### Archivos Adjuntos
 

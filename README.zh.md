@@ -111,7 +111,7 @@ npx cc-telegram
 5. 选择优先级级别
 6. 选择重试次数（10次或自定义）
 
-**Plan 模式**：复杂任务会自动以 plan 模式（`--plan` 标志）运行 Claude。这使 Claude 能够在执行前设计实现方案，从而为复杂需求获得更好的结果。
+**Plan 模式**：复杂任务会自动以 plan 模式（`--permission-mode plan` 选项）运行 Claude。这使 Claude 能够在执行前设计实现方案，从而为复杂需求获得更好的结果。
 
 ### 文件附件
 

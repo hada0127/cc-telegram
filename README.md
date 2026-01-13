@@ -111,7 +111,7 @@ For tasks with completion criteria and auto-retry:
 5. Select priority level
 6. Choose retry count (10 or custom)
 
-**Plan Mode**: Complex tasks automatically run Claude in plan mode (`--plan` flag). This enables Claude to design an implementation approach before executing, resulting in better outcomes for complex requirements.
+**Plan Mode**: Complex tasks automatically run Claude in plan mode (`--permission-mode plan` option). This enables Claude to design an implementation approach before executing, resulting in better outcomes for complex requirements.
 
 ### File Attachments
 
