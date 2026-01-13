@@ -550,6 +550,31 @@ async function handleNewTaskFlow(chatId, text) {
   const state = userStates.get(chatId);
   if (!state) return false;
 
+  // 복잡도 선택 단계 - 텍스트 입력 처리
+  if (state.step === 'complexity') {
+    if (text === '1') {
+      // 단순 선택
+      state.step = 'simple_requirement';
+      state.isSimple = true;
+      state.sessionId = generateSessionId();
+      state.attachments = [];
+      userStates.set(chatId, state);
+      await sendMessage(t('telegram.step_requirement'));
+      return true;
+    } else if (text === '2') {
+      // 복잡 선택
+      state.step = 'requirement';
+      state.isSimple = false;
+      state.sessionId = generateSessionId();
+      state.attachments = [];
+      userStates.set(chatId, state);
+      await sendMessage(t('telegram.step1_requirement'));
+      return true;
+    }
+    // 1, 2 외의 입력은 무시하고 안내 메시지 다시 표시하지 않음 (버튼 클릭 유도)
+    return false;
+  }
+
   // 단순 요청: 요구사항만 입력하면 바로 접수
   if (state.step === 'simple_requirement') {
     state.requirement = text;
@@ -585,6 +610,44 @@ async function handleNewTaskFlow(chatId, text) {
       }
     });
     return true;
+  }
+
+  // 우선순위 단계 - 텍스트 입력 처리
+  if (state.step === 'priority') {
+    const priorityNum = parseInt(text, 10);
+    if (priorityNum >= 1 && priorityNum <= 4) {
+      state.priority = priorityNum;
+      state.step = 'retries';
+      userStates.set(chatId, state);
+
+      const defaultRetries = config?.defaultMaxRetries || 15;
+      await sendMessage(t('telegram.step4_retries'), {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: `${defaultRetries}${t('telegram.retries_unit')}`, callback_data: 'retry_default' }
+          ]]
+        }
+      });
+      return true;
+    }
+    // 1-4 외의 입력은 무시
+    return false;
+  }
+
+  // 반복 횟수 단계 - 텍스트 입력 처리 (직접 숫자 입력)
+  if (state.step === 'retries') {
+    const retries = parseInt(text, 10);
+    if (!isNaN(retries) && retries >= 1 && retries <= 100) {
+      await finishTaskCreation(chatId, state, retries);
+      return true;
+    }
+    // 유효하지 않은 숫자면 에러 메시지 표시
+    if (!isNaN(retries)) {
+      await sendMessage(t('telegram.invalid_retries'));
+      return true;
+    }
+    // 숫자가 아닌 입력은 무시
+    return false;
   }
 
   if (state.step === 'retries_custom') {
@@ -738,12 +801,9 @@ async function handleCallbackQuery(query) {
       const defaultRetries = config?.defaultMaxRetries || 15;
       await sendMessage(t('telegram.step4_retries'), {
         reply_markup: {
-          inline_keyboard: [
-            [
-              { text: `${defaultRetries}${t('telegram.retries_unit')}`, callback_data: 'retry_default' },
-              { text: t('telegram.retries_custom'), callback_data: 'retry_custom' }
-            ]
-          ]
+          inline_keyboard: [[
+            { text: `${defaultRetries}${t('telegram.retries_unit')}`, callback_data: 'retry_default' }
+          ]]
         }
       });
     } else {
