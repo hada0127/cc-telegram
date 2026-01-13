@@ -1,6 +1,6 @@
 {
   "name": "cc-telegram",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "텔레그램을 통한 원격 Claude Code 실행 도구",
   "type": "module",
   "bin": {
