@@ -178,7 +178,7 @@
     "instruction1": "Completa el requisito y cumple con los criterios de finalización.",
     "instruction2": "Verifica que los criterios de finalización se cumplan al terminar.",
     "instruction3": "Si no se pueden cumplir los criterios de finalización, explica el motivo.",
-    "plan_instruction": "[IMPORTANTE] Modo plan activo. Una vez que tu plan esté listo, será aprobado automáticamente. NO te detengas después de crear el plan - DEBES completar la implementación. Después de escribir el plan, procede inmediatamente con las modificaciones/implementación del código y emite la señal de finalización. No esperes la entrada del usuario.",
+    "plan_instruction": "[CRÍTICO - DEBE SEGUIRSE] Este es el modo plan. Los planes se aprueban automáticamente inmediatamente después de su creación. NUNCA termines con mensajes como 'He escrito el plan', 'El archivo del plan está completo' o similar. Escribir un plan es solo el comienzo - DEBES completar TODAS las modificaciones de código e implementaciones antes de emitir la señal de finalización. Si te detienes después de planificar, se tratará como un FALLO.",
     "signal_title": "Señal de Finalización (¡Importante!)",
     "signal_complete": "Si todo el trabajo está completo y los criterios se cumplen, emite esta señal:",
     "signal_failed": "Si el trabajo no puede completarse o los criterios no se cumplen, emite esta señal con la razón:",

@@ -178,7 +178,7 @@
     "instruction1": "Complete o requisito e atenda aos critérios de conclusão.",
     "instruction2": "Verifique se os critérios de conclusão foram atendidos ao finalizar.",
     "instruction3": "Explique o motivo se os critérios de conclusão não puderem ser atendidos.",
-    "plan_instruction": "[IMPORTANTE] Modo de plano ativo. Quando seu plano estiver pronto, será aprovado automaticamente. NÃO pare após criar o plano - você DEVE completar a implementação. Após escrever o plano, prossiga imediatamente com as modificações/implementação do código e emita o sinal de conclusão. Não aguarde entrada do usuário.",
+    "plan_instruction": "[CRÍTICO - DEVE SER SEGUIDO] Este é o modo de plano. Os planos são aprovados automaticamente imediatamente após a criação. NUNCA termine com mensagens como 'Escrevi o plano', 'O arquivo do plano está completo' ou similar. Escrever um plano é apenas o começo - você DEVE completar TODAS as modificações de código e implementações antes de emitir o sinal de conclusão. Se você parar após planejar, será tratado como FALHA.",
     "signal_title": "Sinal de Conclusão (Importante!)",
     "signal_complete": "Se todo o trabalho estiver completo e os critérios forem atendidos, emita este sinal:",
     "signal_failed": "Se o trabalho não puder ser concluído ou os critérios não forem atendidos, emita este sinal com o motivo:",
