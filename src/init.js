@@ -249,10 +249,18 @@ export async function initialize(cwd) {
     console.log(`✅ ${t('init.sequential_mode')}`);
   }
 
-  // 10. 설정 저장
-  await saveConfig({ botToken, chatId: detectedChatId, debugMode: false, defaultMaxRetries, parallelExecution, maxParallel });
+  // 10. 타임아웃 설정
+  console.log(`\n⏱️ ${t('init.timeout_setting')}\n`);
+  const timeoutInput = await prompt(t('init.enter_timeout', { recommended: '30' }));
+  let taskTimeout = parseInt(timeoutInput, 10) || 30;
+  if (taskTimeout < 5) taskTimeout = 5;     // 최소 5분
+  if (taskTimeout > 180) taskTimeout = 180; // 최대 3시간
+  console.log(`✅ ${t('init.timeout_set', { minutes: taskTimeout })}`);
 
-  // 11. 봇 명령어 등록 (자동완성용)
+  // 11. 설정 저장
+  await saveConfig({ botToken, chatId: detectedChatId, debugMode: false, defaultMaxRetries, parallelExecution, maxParallel, taskTimeout });
+
+  // 12. 봇 명령어 등록 (자동완성용)
   console.log(`📝 ${t('init.registering_commands')}`);
   const commands = [
     { command: 'start', description: t('telegram.cmd_start') },

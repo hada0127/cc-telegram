@@ -5,8 +5,8 @@
  * 텔레그램을 통한 원격 Claude Code 실행
  */
 
-import { setCwd, configExists, getDataDir, loadConfig } from './config.js';
-import { initialize } from './init.js';
+import { setCwd, configExists, getDataDir, loadConfig, saveConfig, clearConfigCache } from './config.js';
+import { initialize, prompt } from './init.js';
 import { cleanupOrphanTasks } from './tasks.js';
 import { startBot, stopBot } from './telegram.js';
 import { startExecutor, stopExecutor } from './executor.js';
@@ -67,7 +67,7 @@ export async function main() {
   }
 
   // 로그 로테이션 실행
-  const config = await loadConfig();
+  let config = await loadConfig();
   const dataDir = getDataDir();
   const cleanupResult = await runCleanup(dataDir, config.logRetentionDays, 30);
 
@@ -76,6 +76,22 @@ export async function main() {
   }
   if (cleanupResult.tasks.completed > 0 || cleanupResult.tasks.failed > 0) {
     info(t('cli.old_tasks_deleted', { completed: cleanupResult.tasks.completed, failed: cleanupResult.tasks.failed }));
+  }
+
+  // taskTimeout 마이그레이션 (기존 config에 없으면 설정)
+  if (config.taskTimeout === undefined || config.taskTimeout === null) {
+    console.log(`\n⏱️ ${t('init.timeout_setting')}\n`);
+    console.log(t('init.timeout_migration'));
+    const timeoutInput = await prompt(t('init.enter_timeout', { recommended: '30' }));
+    let taskTimeout = parseInt(timeoutInput, 10) || 30;
+    if (taskTimeout < 5) taskTimeout = 5;
+    if (taskTimeout > 180) taskTimeout = 180;
+    console.log(`✅ ${t('init.timeout_set', { minutes: taskTimeout })}\n`);
+
+    // 설정 저장 (기존 설정 유지하면서 taskTimeout만 추가)
+    await saveConfig({ ...config, taskTimeout });
+    clearConfigCache();
+    config = await loadConfig();
   }
 
   // 봇 및 실행기 시작

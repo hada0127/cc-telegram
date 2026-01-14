@@ -52,7 +52,7 @@ export async function configExists() {
 
 /**
  * 설정 로드
- * @returns {Promise<{botToken: string, chatId: string, debugMode: boolean, claudeCommand: string|null, logRetentionDays: number, defaultMaxRetries: number, parallelExecution: boolean, maxParallel: number}>}
+ * @returns {Promise<{botToken: string, chatId: string, debugMode: boolean, claudeCommand: string|null, logRetentionDays: number, defaultMaxRetries: number, parallelExecution: boolean, maxParallel: number, taskTimeout: number}>}
  */
 export async function loadConfig() {
   if (cachedConfig) return cachedConfig;
@@ -69,7 +69,8 @@ export async function loadConfig() {
     logRetentionDays: config.logRetentionDays || 7,
     defaultMaxRetries: config.defaultMaxRetries || 15,
     parallelExecution: config.parallelExecution || false,
-    maxParallel: config.maxParallel || 3
+    maxParallel: config.maxParallel || 3,
+    taskTimeout: config.taskTimeout || 30 // 기본 30분
   };
 
   return cachedConfig;
@@ -86,8 +87,9 @@ export async function loadConfig() {
  * @param {number} [config.defaultMaxRetries]
  * @param {boolean} [config.parallelExecution]
  * @param {number} [config.maxParallel]
+ * @param {number} [config.taskTimeout]
  */
-export async function saveConfig({ botToken, chatId, debugMode = false, claudeCommand = null, logRetentionDays = 7, defaultMaxRetries = 15, parallelExecution = false, maxParallel = 3 }) {
+export async function saveConfig({ botToken, chatId, debugMode = false, claudeCommand = null, logRetentionDays = 7, defaultMaxRetries = 15, parallelExecution = false, maxParallel = 3, taskTimeout = 30 }) {
   const configPath = getConfigPath();
   const encryptedConfig = {
     botToken: encrypt(botToken),
@@ -97,11 +99,12 @@ export async function saveConfig({ botToken, chatId, debugMode = false, claudeCo
     logRetentionDays,
     defaultMaxRetries,
     parallelExecution,
-    maxParallel
+    maxParallel,
+    taskTimeout
   };
 
   await fs.writeFile(configPath, JSON.stringify(encryptedConfig, null, 2));
-  cachedConfig = { botToken, chatId, debugMode, claudeCommand, logRetentionDays, defaultMaxRetries, parallelExecution, maxParallel };
+  cachedConfig = { botToken, chatId, debugMode, claudeCommand, logRetentionDays, defaultMaxRetries, parallelExecution, maxParallel, taskTimeout };
 }
 
 /**

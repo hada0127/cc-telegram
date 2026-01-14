@@ -41,13 +41,10 @@ function escapeHtml(text) {
 /**
  * Claude 실행 명령어 가져오기
  * config에서 설정된 값이 있으면 사용, 없으면 자동 감지
- * @param {object} options
- * @param {boolean} [options.planMode=false] - plan 모드 사용 여부
  * @returns {Promise<{command: string, args: string[], useShell: boolean}>}
  */
 /* istanbul ignore next */
-async function getClaudeCommand(options = {}) {
-  const { planMode = false } = options;
+async function getClaudeCommand() {
   const config = await loadConfig();
 
   let command, args, useShell;
@@ -56,33 +53,18 @@ async function getClaudeCommand(options = {}) {
     // 사용자 지정 명령어 사용
     const parts = config.claudeCommand.split(' ');
     command = parts[0];
-    // plan 모드일 때는 --permission-mode plan 사용, 아니면 --dangerously-skip-permissions 사용
-    if (planMode) {
-      args = [...parts.slice(1), '--permission-mode', 'plan'];
-    } else {
-      args = [...parts.slice(1), '--dangerously-skip-permissions'];
-    }
+    args = [...parts.slice(1), '--dangerously-skip-permissions'];
     useShell = true;
   } else {
     // 자동 감지
     const isWindows = process.platform === 'win32';
     if (isWindows) {
       command = 'claude.cmd';
-      // plan 모드일 때는 --permission-mode plan 사용, 아니면 --dangerously-skip-permissions 사용
-      if (planMode) {
-        args = ['--permission-mode', 'plan'];
-      } else {
-        args = ['--dangerously-skip-permissions'];
-      }
+      args = ['--dangerously-skip-permissions'];
       useShell = true;
     } else {
       command = 'claude';
-      // plan 모드일 때는 --permission-mode plan 사용, 아니면 --dangerously-skip-permissions 사용
-      if (planMode) {
-        args = ['--permission-mode', 'plan'];
-      } else {
-        args = ['--dangerously-skip-permissions'];
-      }
+      args = ['--dangerously-skip-permissions'];
       useShell = false;
     }
   }
@@ -96,14 +78,13 @@ async function getClaudeCommand(options = {}) {
  * @param {string} cwd
  * @param {string} taskId - 작업 ID (병렬 실행 시 구분용)
  * @param {boolean} isParallel - 병렬 실행 여부
- * @param {object} options - 추가 옵션
- * @param {boolean} [options.planMode=false] - plan 모드 사용 여부
  * @returns {Promise<{exitCode: number, output: string}>}
  */
 /* istanbul ignore next */
-async function runClaude(prompt, cwd, taskId, isParallel = false, options = {}) {
-  const { planMode = false } = options;
-  const { command, args, useShell } = await getClaudeCommand({ planMode });
+async function runClaude(prompt, cwd, taskId, isParallel = false) {
+  const config = await loadConfig();
+  const { command, args, useShell } = await getClaudeCommand();
+  const timeoutMinutes = config.taskTimeout || 30;
 
   return new Promise((resolve, reject) => {
     const spawnOptions = {
@@ -172,11 +153,11 @@ async function runClaude(prompt, cwd, taskId, isParallel = false, options = {}) 
     proc.stdin.write(prompt);
     proc.stdin.end();
 
-    // 타임아웃 (30분)
+    // 타임아웃 (config에서 설정, 기본 30분)
     const timeout = setTimeout(() => {
       proc.kill('SIGTERM');
-      reject(new Error(t('executor.timeout_error')));
-    }, 30 * 60 * 1000);
+      reject(new Error(t('executor.timeout_error', { minutes: timeoutMinutes })));
+    }, timeoutMinutes * 60 * 1000);
 
     // 프로세스 저장 (취소용)
     runningProcesses.set(taskId, proc);
@@ -332,6 +313,37 @@ function analyzeResult(output, options = {}) {
 }
 
 /**
+ * exitCode 기반 실패 사유 추출
+ * @param {number} exitCode
+ * @param {string} output
+ * @returns {string}
+ */
+function extractExitCodeReason(exitCode, output) {
+  // exitCode별 기본 사유
+  const baseReasons = {
+    1: t('executor.exit_reason_general'),      // 일반 오류
+    2: t('executor.exit_reason_usage'),        // 잘못된 사용법
+    126: t('executor.exit_reason_permission'), // 실행 권한 없음
+    127: t('executor.exit_reason_not_found'),  // 명령어 없음
+    130: t('executor.exit_reason_interrupt'),  // Ctrl+C (SIGINT)
+    137: t('executor.exit_reason_killed'),     // SIGKILL
+    143: t('executor.exit_reason_terminated')  // SIGTERM
+  };
+
+  const baseReason = baseReasons[exitCode] || t('executor.exit_reason_unknown', { code: exitCode });
+
+  // 출력에서 구체적인 오류 메시지 추출 시도
+  const detailedReason = extractFailureReason(output);
+
+  // 알 수 없는 오류가 아니면 상세 사유 포함
+  if (detailedReason !== t('executor.unknown_error')) {
+    return `${baseReason}: ${detailedReason}`;
+  }
+
+  return baseReason;
+}
+
+/**
  * 실패 이유 추출
  * @param {string} output
  * @returns {string}
@@ -412,9 +424,7 @@ async function processTask(task, isParallel = false) {
     // 작업 실행
     const prompt = buildPrompt(task);
     clearClaudeOutput(task.id);
-    // 복잡 작업(complexity: 'complex')일 때 plan 모드 사용
-    const usePlanMode = task.complexity === 'complex';
-    const { exitCode, output } = await runClaude(prompt, task.workingDirectory, task.id, isParallel, { planMode: usePlanMode });
+    const { exitCode, output } = await runClaude(prompt, task.workingDirectory, task.id, isParallel);
 
     let success = false;
     let reason = null;
@@ -422,7 +432,7 @@ async function processTask(task, isParallel = false) {
     // exitCode가 0이 아니면 실패
     if (exitCode !== 0) {
       success = false;
-      reason = t('executor.exit_code_error', { code: exitCode });
+      reason = extractExitCodeReason(exitCode, output);
     } else {
       // 출력 분석
       // 반복 작업(maxRetries > 1)은 엄격 모드 적용 (완료 신호 필수)
@@ -689,4 +699,4 @@ export function isTaskRunning(taskId) {
 }
 
 // 테스트용 export
-export { analyzeResult, extractFailureReason, escapeHtml, buildPrompt, generateSummary };
+export { analyzeResult, extractFailureReason, extractExitCodeReason, escapeHtml, buildPrompt, generateSummary };
