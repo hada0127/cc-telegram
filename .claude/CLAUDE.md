@@ -5,6 +5,9 @@
 
 ## 작업 규칙
 - 모든 작업 완료 후 .claude 폴더 내의 적절한 파일에 작업 내용을 반영한다
+- **작업 완료 시 VERSION_HISTORY.md 업데이트**:
+  - `git log --oneline -10` 으로 최근 커밋 확인
+  - VERSION_HISTORY.md에 최근 10개 커밋 반영
 - **작업 완료 시 반드시 커밋 및 푸시**:
   1. `git add -A`
   2. 변경 내용에 맞는 커밋 메시지 생성 (feat/fix/docs/test/chore)
