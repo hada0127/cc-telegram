@@ -5,8 +5,9 @@
  * 텔레그램을 통한 원격 Claude Code 실행
  */
 
-import { setCwd, configExists, getDataDir, loadConfig, saveConfig, clearConfigCache } from './config.js';
+import { setCwd, configExists, getDataDir, getConfigPath, loadConfig, saveConfig, clearConfigCache } from './config.js';
 import { initialize, prompt } from './init.js';
+import { loadRawConfig } from './utils/configUtils.js';
 import { cleanupOrphanTasks } from './tasks.js';
 import { startBot, stopBot } from './telegram.js';
 import { startExecutor, stopExecutor } from './executor.js';
@@ -79,7 +80,9 @@ export async function main() {
   }
 
   // taskTimeout 마이그레이션 (기존 config에 없으면 설정)
-  if (config.taskTimeout === undefined || config.taskTimeout === null) {
+  // loadConfig()는 기본값을 반환하므로 원시 config 파일에서 필드 존재 여부 확인
+  const rawConfig = await loadRawConfig(getConfigPath());
+  if (rawConfig && rawConfig.taskTimeout === undefined) {
     console.log(`\n⏱️ ${t('init.timeout_setting')}\n`);
     console.log(t('init.timeout_migration'));
     const timeoutInput = await prompt(t('init.enter_timeout', { recommended: '30' }));
